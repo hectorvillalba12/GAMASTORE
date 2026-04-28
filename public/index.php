@@ -139,7 +139,7 @@ switch ($action) {
         break;
 
     case 'delete_cliente':
-    $cliente->delete($_GET['id']);
+    $cliente->delete();
     break;
 
     // VENTAS
