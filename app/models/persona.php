@@ -42,4 +42,35 @@ class Persona {
             'email'    => $data['email']
         ]);
     }
+
+    // NUEVO — verifica si el DNI ya existe en otra persona
+    // $excluir_id: si se pasa, excluye ese id_persona (útil al editar)
+    public function existeDni($dni, $excluir_id = null) {
+        if ($excluir_id) {
+            $sql  = "SELECT COUNT(*) FROM persona WHERE dni = :dni AND id_persona != :excluir";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute(['dni' => $dni, 'excluir' => $excluir_id]);
+        } else {
+            $sql  = "SELECT COUNT(*) FROM persona WHERE dni = :dni";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute(['dni' => $dni]);
+        }
+        return $stmt->fetchColumn() > 0;
+    }
+
+    // NUEVO — verifica si el email ya existe en otra persona
+    // $excluir_id: si se pasa, excluye ese id_persona (útil al editar)
+    public function existeEmail($email, $excluir_id = null) {
+        if (empty($email)) return false;
+        if ($excluir_id) {
+            $sql  = "SELECT COUNT(*) FROM persona WHERE email = :email AND id_persona != :excluir";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute(['email' => $email, 'excluir' => $excluir_id]);
+        } else {
+            $sql  = "SELECT COUNT(*) FROM persona WHERE email = :email";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute(['email' => $email]);
+        }
+        return $stmt->fetchColumn() > 0;
+    }
 }

@@ -45,30 +45,28 @@ class venta {
     }
 
     // INSERTAR detalle de venta
-    // Columnas reales: id_detalleventa, IVA, descripcion, precio_producto,
-    //                  total_venta, precio_final, venta_idventa, productos_idproducto
     public function crearDetalle($id_venta, $id_producto, $cantidad, $precio_unitario) {
-        $iva          = 0.21;
-        $subtotal     = $cantidad * $precio_unitario;
-        $monto_iva    = round($subtotal * $iva, 2);
-        $precio_final = round($subtotal + $monto_iva, 2);
+    $iva          = 0.21;
+    $subtotal     = $cantidad * $precio_unitario;
+    $monto_iva    = round($subtotal * $iva, 2);
+    $precio_final = round($subtotal + $monto_iva, 2);
 
-        $sql = "INSERT INTO detalle_venta
-                    (IVA, descripcion, precio_producto, total_venta, precio_final,
-                    venta_idventa, productos_idproducto)
-                VALUES
-                    (:iva, :descripcion, :precio_producto, :total_venta, :precio_final,
-                    :venta_idventa, :productos_idproducto)";
-        $stmt = $this->conn->prepare($sql);
-        return $stmt->execute([
-            'iva'                  => $iva,
-            'descripcion'          => "Producto #{$id_producto} x{$cantidad}",
-            'precio_producto'      => $precio_unitario,
-            'total_venta'          => $subtotal,
-            'precio_final'         => $precio_final,
-            'venta_idventa'        => $id_venta,
-            'productos_idproducto' => $id_producto
-        ]);
+    $sql = "INSERT INTO detalle_venta
+                (IVA, descripcion, precio_producto, total_venta, precio_final,
+                venta_idventa, productos_idproducto)
+            VALUES
+                (:iva, :descripcion, :precio_producto, :total_venta, :precio_final,
+                :venta_idventa, :productos_idproducto)";
+    $stmt = $this->conn->prepare($sql);
+    return $stmt->execute([
+        'iva'                  => $iva,
+        'descripcion'          => "Producto #{$id_producto} x{$cantidad}",
+        'precio_producto'      => $precio_unitario,
+        'total_venta'          => $subtotal,
+        'precio_final'         => $precio_final,
+        'venta_idventa'        => $id_venta,
+        'productos_idproducto' => $id_producto
+    ]);
     }
 
     // DESCONTAR stock en inventario

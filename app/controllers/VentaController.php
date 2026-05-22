@@ -11,17 +11,20 @@ class VentaController {
     }
 
     public function index() {
+        Auth::verificarModulo('ventas');
         $ventas = $this->venta->listar();
         require __DIR__ . '/../views/venta/index.php';
     }
 
     public function create() {
+        Auth::verificarModulo('ventas');
         $clientes  = $this->venta->listarClientes();
         $productos = $this->venta->listarProductos();
         require __DIR__ . '/../views/venta/create.php';
     }
 
     public function store() {
+        Auth::verificarModulo('ventas');
         $productos_ids     = $_POST['producto_id'] ?? [];
         $cantidades        = $_POST['cantidad'] ?? [];
         $precios_unitarios = $_POST['precio_unitario'] ?? [];
@@ -61,6 +64,7 @@ class VentaController {
     }
 
     public function show() {
+        Auth::verificarModulo('ventas');
         $id      = $_GET['id'];
         $venta   = $this->venta->obtener($id);
         $detalle = $this->venta->obtenerDetalle($id);

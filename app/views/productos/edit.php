@@ -1,55 +1,115 @@
-<h2>Editar Producto</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Producto - GamaStore</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
 
-<form method="POST" action="index.php?action=actualizar">
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
 
-<input type="hidden" name="id" value="<?= $producto['id_producto'] ?>">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-pencil-square"></i> Editar Producto</h2>
+                <a href="index.php?action=productos" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+            </div>
 
-<input name="nombre" value="<?= $producto['nombre'] ?>" class="form-control mb-2">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST" action="index.php?action=actualizar">
 
-<input name="tipodezapatillas" value="<?= $producto['tipodezapatillas'] ?>" class="form-control mb-2">
+                        <input type="hidden" name="id_producto" value="<?= $producto['id_producto'] ?>">
 
-<input type="number" name="precio" value="<?= $producto['precio'] ?>" class="form-control mb-2">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre del producto</label>
+                                <input type="text" name="nombre" class="form-control"
+                                    value="<?= htmlspecialchars($producto['nombre']) ?>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo de zapatilla</label>
+                                <input type="text" name="tipodezapatillas" class="form-control"
+                                    value="<?= htmlspecialchars($producto['tipodezapatillas']) ?>" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Precio</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" name="precio" class="form-control"
+                                        value="<?= $producto['precio'] ?>" min="1" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Talle</label>
+                                <select name="talle_id_talle" class="form-select" required>
+                                    <option value="">-- Seleccionar --</option>
+                                    <?php foreach ($talle as $t): ?>
+                                        <option value="<?= $t['id_talle'] ?>"
+                                            <?= $t['id_talle'] == $producto['talle_id_talle'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($t['talles_disponibles']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Color</label>
+                                <select name="color_id_color" class="form-select" required>
+                                    <option value="">-- Seleccionar --</option>
+                                    <?php foreach ($color as $c): ?>
+                                        <option value="<?= $c['id_color'] ?>"
+                                            <?= $c['id_color'] == $producto['color_id_color'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($c['colores_disponibles']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Marca</label>
+                                <select name="marca_id_marca" class="form-select" required>
+                                    <option value="">-- Seleccionar --</option>
+                                    <?php foreach ($marca as $m): ?>
+                                        <option value="<?= $m['id_marca'] ?>"
+                                            <?= $m['id_marca'] == $producto['marca_id_marca'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($m['marcas_disponibles']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Categoría</label>
+                                <select name="categoria_id_categoria" class="form-select" required>
+                                    <option value="">-- Seleccionar --</option>
+                                    <?php foreach ($categoria as $cat): ?>
+                                        <option value="<?= $cat['id_categoria'] ?>"
+                                            <?= $cat['id_categoria'] == $producto['categoria_id_categoria'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($cat['tipodezapatilla']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
 
-<!-- TALLE -->
-<select name="talle_id_talle" class="form-control mb-2">
-    <?php foreach ($talles as $t): ?>
-        <option value="<?= $t['id_talle'] ?>"
-            <?= $t['id_talle'] == $producto['talle_id_talle'] ? 'selected' : '' ?>>
-            <?= $t['talles_disponibles'] ?>
-        </option>
-    <?php endforeach; ?>
-</select>
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="index.php?action=productos" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning text-white">
+                                <i class="bi bi-save"></i> Actualizar Producto
+                            </button>
+                        </div>
 
-<!-- MARCA -->
-<select name="marca_id_marca" class="form-control mb-2">
-    <?php foreach ($marcas as $m): ?>
-        <option value="<?= $m['id_marca'] ?>"
-            <?= $m['id_marca'] == $producto['marca_id_marca'] ? 'selected' : '' ?>>
-            <?= $m['marcas_disponibles'] ?>
-        </option>
-    <?php endforeach; ?>
-</select>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<!-- COLOR -->
-<select name="color_id_color" class="form-control mb-2">
-    <?php foreach ($colores as $c): ?>
-        <option value="<?= $c['id_color'] ?>"
-            <?= $c['id_color'] == $producto['color_id_color'] ? 'selected' : '' ?>>
-            <?= $c['colores_disponibles'] ?>
-        </option>
-    <?php endforeach; ?>
-</select>
-
-<!-- CATEGORIA -->
-<select name="categoria_id_categoria" class="form-control mb-2">
-    <?php foreach ($categorias as $cat): ?>
-        <option value="<?= $cat['id_categoria'] ?>"
-            <?= $cat['id_categoria'] == $producto['categoria_id_categoria'] ? 'selected' : '' ?>>
-            <?= $cat['tipodezapatilla'] ?>
-        </option>
-    <?php endforeach; ?>
-</select>
-
-<button class="btn btn-success">Actualizar</button>
-
-</form>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

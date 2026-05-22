@@ -17,11 +17,32 @@
         </a>
     </div>
 
+    <!-- ÍTEM 3: Mensajes de error de unicidad -->
+    <?php if (isset($_GET['error'])): ?>
+        <?php if ($_GET['error'] === 'dni_duplicado'): ?>
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Ya existe otro cliente con ese DNI. Ingresá uno diferente.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php elseif ($_GET['error'] === 'email_duplicado'): ?>
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Ya existe otro cliente con ese email. Ingresá uno diferente.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
+
     <div class="card shadow-sm">
         <div class="card-body">
             <form method="POST" action="index.php?action=update_cliente">
 
+                <!-- ÍTEM 4: id_persona para actualizar la tabla persona -->
                 <input type="hidden" name="id_persona" value="<?= $cliente['id_persona'] ?>">
+                <!-- ÍTEM 4: id_cliente para excluir al propio cliente en validación de unicidad -->
+                <input type="hidden" name="id_cliente" value="<?= $cliente['id_cliente'] ?>">
+
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">Nombre</label>

@@ -17,6 +17,23 @@
         </a>
     </div>
 
+    <!-- ÍTEM 3: Mensajes de error de validación de unicidad -->
+    <?php if (isset($_GET['error'])): ?>
+        <?php if ($_GET['error'] === 'dni_duplicado'): ?>
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Ya existe un cliente registrado con ese DNI.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php elseif ($_GET['error'] === 'email_duplicado'): ?>
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Ya existe un cliente registrado con ese email.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
+
     <div class="card shadow-sm">
         <div class="card-body">
             <form method="POST" action="index.php?action=store_cliente">
@@ -39,7 +56,11 @@
                         <input type="text" name="telefono" class="form-control">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Email</label>
+                        <!-- ÍTEM 11: Nota sobre verificación de email -->
+                        <label class="form-label">
+                            Email
+                            <small class="text-muted">(se enviará un correo de verificación)</small>
+                        </label>
                         <input type="email" name="email" class="form-control">
                     </div>
                 </div>

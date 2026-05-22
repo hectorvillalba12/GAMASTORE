@@ -6,22 +6,30 @@ class Inventario {
     public function __construct($db) {
         $this->conn = $db;
     }
-
-    // LISTAR con JOIN a producto
+    
     public function listar() {
-        $sql = "SELECT i.*, p.nombre AS nombre_producto 
-                FROM inventario i
-                LEFT JOIN producto p ON i.producto_id_producto = p.id_producto
-                ORDER BY i.id_inventario DESC";
-        return $this->conn->query($sql);
+    $sql = "SELECT i.*, 
+                p.nombre AS nombre_producto,
+                p.precio,
+                p.tipodezapatillas,
+                t.talles_disponibles AS talle,
+                c.colores_disponibles AS color
+            FROM inventario i
+            LEFT JOIN producto p ON i.producto_id_producto = p.id_producto
+            LEFT JOIN talle t ON p.talle_id_talle = t.id_talle
+            LEFT JOIN color c ON p.color_id_color = c.id_color
+            ORDER BY p.nombre ASC";
+    return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // OBTENER uno por ID
     public function obtener($id) {
-        $sql = "SELECT i.*, p.nombre AS nombre_producto 
-                FROM inventario i
-                LEFT JOIN producto p ON i.producto_id_producto = p.id_producto
-                WHERE i.id_inventario = :id";
+        $sql = "SELECT i.*, 
+            p.nombre AS nombre_producto,
+            p.precio,
+            p.tipodezapatillas
+            FROM inventario i
+            LEFT JOIN producto p ON i.producto_id_producto = p.id_producto
+            WHERE i.id_inventario = :id";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute(['id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);

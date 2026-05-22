@@ -25,7 +25,11 @@ class AuthController {
 
             // HASH
             if (password_verify($password, $user['password'])) {
-                $_SESSION['usuario'] = $user;
+
+                $stmt2 = $conn->prepare("SELECT * FROM usuario WHERE id_usuario = ?");
+                $stmt2->execute([$user['id_usuario']]);
+                $_SESSION['usuario'] = $stmt2->fetch(PDO::FETCH_ASSOC);
+
                 header("Location: index.php?action=dashboard");
                 exit();
             }
@@ -38,7 +42,10 @@ class AuthController {
                 $stmt = $conn->prepare("UPDATE usuario SET password=? WHERE id_usuario=?");
                 $stmt->execute([$nuevoHash, $user['id_usuario']]);
 
-                $_SESSION['usuario'] = $user;
+                $stmt2 = $conn->prepare("SELECT * FROM usuario WHERE id_usuario = ?");
+                $stmt2->execute([$user['id_usuario']]);
+                $_SESSION['usuario'] = $stmt2->fetch(PDO::FETCH_ASSOC);
+
                 header("Location: index.php?action=dashboard");
                 exit();
             }
@@ -47,12 +54,12 @@ class AuthController {
         echo "Error login";
     }
 
-    //FORM OLVIDE CONTRASEÑA
+    // FORM OLVIDE CONTRASEÑA
     public function forgotPassword() {
         require '../app/views/auth/forgot.php';
     }
 
-    //  ENVIAR EMAIL CON TOKEN
+    // ENVIAR EMAIL CON TOKEN
     public function sendReset() {
 
         $db = new Database();
@@ -72,10 +79,8 @@ class AuthController {
             $stmt = $conn->prepare("UPDATE usuario SET reset_token=?, token_expira=? WHERE id_usuario=?");
             $stmt->execute([$token, $expira, $user['id_usuario']]);
 
-            // LINK DE RECUPERACIÓN
             $link = "http://localhost/gamastorefinal/public/index.php?action=resetForm&token=$token";
 
-            //PHPMailer
             require '../vendor/autoload.php';
 
             $mail = new PHPMailer(true);
@@ -102,7 +107,6 @@ class AuthController {
                 ";
 
                 $mail->send();
-
                 echo "Correo enviado correctamente";
 
             } catch (Exception $e) {
@@ -122,50 +126,85 @@ class AuthController {
     // GUARDAR NUEVA PASSWORD
     public function resetPassword() {
 
-    $db = new Database();
-    $conn = $db->connect();
+        $db = new Database();
+        $conn = $db->connect();
 
-    $token = $_POST['token'];
-    $password = $_POST['password'];
+        $token = $_POST['token'];
+        $password = $_POST['password'];
 
-    // Buscar usuario con token válido
-    $stmt = $conn->prepare("
-        SELECT * FROM usuario 
-        WHERE reset_token = ? 
-        AND token_expira > NOW()
-    ");
-    $stmt->execute([$token]);
-    $user = $stmt->fetch();
-
-    if ($user) {
-
-        // HASH SEGURO
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-
-        // Guardar nueva contraseña
         $stmt = $conn->prepare("
-            UPDATE usuario 
-            SET password = ?, reset_token = NULL, token_expira = NULL 
-            WHERE id_usuario = ?
+            SELECT * FROM usuario 
+            WHERE reset_token = ? 
+            AND token_expira > NOW()
         ");
+        $stmt->execute([$token]);
+        $user = $stmt->fetch();
 
-        if ($stmt->execute([$hash, $user['id_usuario']])) {
+        if ($user) {
 
-            header("Location: index.php?action=login&msg=ok");
-            exit();
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmt = $conn->prepare("
+                UPDATE usuario 
+                SET password = ?, reset_token = NULL, token_expira = NULL 
+                WHERE id_usuario = ?
+            ");
+
+            if ($stmt->execute([$hash, $user['id_usuario']])) {
+                header("Location: index.php?action=login&msg=ok");
+                exit();
+            } else {
+                echo "Error al actualizar contraseña";
+            }
 
         } else {
-            echo "Error al actualizar contraseña";
+            header("Location: index.php?action=login&msg=error");
+            exit();
         }
-
-    } else {
-        header("Location: index.php?action=login&msg=error");
-        exit();
     }
-}
 
     public function logout() {
         session_destroy();
         header("Location: index.php");
+    }
+
+    public function showRegister() {
+        include '../app/views/auth/register.php';
+    }
+
+    public function register() {
+
+        $db   = new Database();
+        $conn = $db->connect();
+
+        $email     = trim($_POST['email']             ?? '');
+        $password  = $_POST['password']               ?? '';
+        $confirmar = $_POST['confirmar_password']     ?? '';
+        $rol       = trim($_POST['rol']               ?? '');
+
+        if (empty($email) || empty($password) || empty($confirmar) || empty($rol)) {
+            header("Location: index.php?action=register&error=campos_requeridos");
+            exit();
+        }
+
+        if ($password !== $confirmar) {
+            header("Location: index.php?action=register&error=passwords_no_coinciden");
+            exit();
+        }
+
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM usuario WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->fetchColumn() > 0) {
+            header("Location: index.php?action=register&error=email_duplicado");
+            exit();
+        }
+
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+
+        $stmt = $conn->prepare("INSERT INTO usuario (email, password, rol, perfil_id) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$email, $hash, $rol, 1]);
+
+        header("Location: index.php?action=login&msg=registro_ok");
+        exit();
     }
 }

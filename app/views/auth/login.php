@@ -10,7 +10,6 @@
 
 <h3 class="text-center">Gamastore</h3>
 
-<!-- MENSAJES -->
 <?php if(isset($_GET['msg'])): ?>
 
     <?php if($_GET['msg'] == 'ok'): ?>
@@ -25,7 +24,40 @@
         </div>
     <?php endif; ?>
 
+    <?php if($_GET['msg'] == 'email_verificado'): ?>
+        <div class="alert alert-success text-center">
+            <strong>¡Email verificado!</strong><br>
+            Tu cuenta fue confirmada correctamente.
+        </div>
+    <?php endif; ?>
+
+    <?php if($_GET['msg'] == 'token_invalido'): ?>
+        <div class="alert alert-danger text-center">
+            El enlace de verificación no es válido o ya fue usado.
+        </div>
+    <?php endif; ?>
+
+    <?php if($_GET['msg'] == 'registro_ok'): ?>
+        <div class="alert alert-success text-center">
+            <strong>¡Cuenta creada!</strong><br>
+            Ya podés iniciar sesión.
+        </div>
+    <?php endif; ?>
+
+    <?php if($_GET['msg'] == 'sesion_requerida'): ?>
+        <div class="alert alert-warning text-center">
+            Necesitás iniciar sesión para acceder.
+        </div>
+    <?php endif; ?>
+
+    <?php if($_GET['msg'] == 'acceso_denegado'): ?>
+        <div class="alert alert-danger text-center">
+            No tenés permisos para acceder a esa sección.
+        </div>
+    <?php endif; ?>
+
 <?php endif; ?>
+
 
 <form method="POST" action="index.php?action=loginPost">
 
@@ -36,6 +68,11 @@
 
 <a href="index.php?action=forgot" class="d-block text-center mt-2">
     ¿Olvidaste tu contraseña?
+</a>
+
+<hr>
+<a href="index.php?action=register" class="d-block text-center text-success">
+    <i class="bi bi-person-plus"></i> Crear cuenta nueva
 </a>
 
 </form>

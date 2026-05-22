@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../models/inventario.php';
+require_once __DIR__ . '/../models/Inventario.php';
 
 class InventarioController {
 
@@ -11,55 +11,22 @@ class InventarioController {
     }
 
     public function index() {
-        $inventarios = $this->inventario->listar();
+        Auth::verificarModulo('inventario');
+        $inventario = $this->inventario->listar();
         require __DIR__ . '/../views/inventario/index.php';
     }
 
-    public function create() {
-        $productos = $this->inventario->productosDisponibles();
-        require __DIR__ . '/../views/inventario/create.php';
-    }
-
-    public function store() {
-        $data = [
-            'stock_actual'         => $_POST['stock_actual'],
-            'ubicacion'            => $_POST['ubicacion'],
-            'stock_maximo'         => $_POST['stock_maximo'],
-            'stock_minimo'         => $_POST['stock_minimo'],
-            'producto_id_producto' => $_POST['producto_id_producto']
-        ];
-
-        $this->inventario->crear($data);
-        header("Location: index.php?action=inventario");
-        exit();
-    }
-
     public function edit() {
-        $id = $_GET['id'];
-        $item = $this->inventario->obtener($id);
-        $productos = $this->inventario->productosDisponibles();
+        Auth::verificarModulo('inventario');
+        $id         = $_GET['id'];
+        $inventario = $this->inventario->obtener($id);
         require __DIR__ . '/../views/inventario/edit.php';
     }
 
     public function update() {
-        $data = [
-            'id_inventario'        => $_POST['id_inventario'],
-            'stock_actual'         => $_POST['stock_actual'],
-            'ubicacion'            => $_POST['ubicacion'],
-            'stock_maximo'         => $_POST['stock_maximo'],
-            'stock_minimo'         => $_POST['stock_minimo'],
-            'producto_id_producto' => $_POST['producto_id_producto']
-        ];
-
-        $this->inventario->actualizar($data);
-        header("Location: index.php?action=inventario");
-        exit();
-    }
-
-    public function delete() {
-        $id = $_GET['id'];
-        $this->inventario->eliminar($id);
-        header("Location: index.php?action=inventario");
+        Auth::verificarModulo('inventario');
+        $this->inventario->actualizar($_POST);
+        header("Location: index.php?action=inventario&ok=1");
         exit();
     }
 }
