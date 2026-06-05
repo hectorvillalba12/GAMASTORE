@@ -21,6 +21,11 @@ class AuthController {
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
+        if ($user && $user['estado'] === 'inactivo') {
+            header("Location: index.php?action=login&msg=usuario_inactivo");
+            exit();
+        }
+
         if ($user) {
 
             // HASH
@@ -51,7 +56,8 @@ class AuthController {
             }
         }
 
-        echo "Error login";
+        header("Location: index.php?action=login&msg=error_login");
+        exit();
     }
 
     // FORM OLVIDE CONTRASEÑA

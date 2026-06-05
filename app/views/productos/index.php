@@ -49,55 +49,57 @@
             <i class="bi bi-box-seam"></i> Productos Activos
         </div>
         <div class="card-body p-0">
-            <table class="table table-hover table-striped mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th>#</th>
-                        <th>Nombre</th>
-                        <th>Tipo</th>
-                        <th>Marca</th>
-                        <th>Talle</th>
-                        <th>Color</th>
-                        <th>Categoría</th>
-                        <th class="text-end">Precio</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php if (empty($productos)): ?>
-                    <tr>
-                        <td colspan="9" class="text-center text-muted py-4">No hay productos activos.</td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach ($productos as $p): ?>
-                    <tr>
-                        <td><?= $p['id_producto'] ?></td>
-                        <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
-                        <td><?= htmlspecialchars($p['tipodezapatillas']) ?></td>
-                        <td><?= htmlspecialchars($p['marca'] ?? '—') ?></td>
-                        <td><?= htmlspecialchars($p['talle'] ?? '—') ?></td>
-                        <td><?= htmlspecialchars($p['color'] ?? '—') ?></td>
-                        <td><?= htmlspecialchars($p['categoria'] ?? '—') ?></td>
-                        <td class="text-end">$<?= number_format($p['precio'], 2, ',', '.') ?></td>
-                        <td class="text-center">
-                            <a href="index.php?action=editar&id=<?= $p['id_producto'] ?>"
-                            class="btn btn-warning btn-sm text-white" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button class="btn btn-danger btn-sm"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalBajaProducto"
-                                data-id="<?= $p['id_producto'] ?>"
-                                data-nombre="<?= htmlspecialchars($p['nombre']) ?>"
-                                title="Dar de baja">
-                                <i class="bi bi-box-arrow-down"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Marca</th>
+                            <th>Talle</th>
+                            <th>Color</th>
+                            <th>Categoría</th>
+                            <th class="text-end">Precio</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if (empty($productos)): ?>
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">No hay productos activos.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($productos as $p): ?>
+                        <tr>
+                            <td><?= $p['id_producto'] ?></td>
+                            <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
+                            <td><?= htmlspecialchars($p['tipodezapatillas']) ?></td>
+                            <td><?= htmlspecialchars($p['marca'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($p['talle'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($p['color'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($p['categoria'] ?? '—') ?></td>
+                            <td class="text-end">$<?= number_format($p['precio'], 2, ',', '.') ?></td>
+                            <td class="text-center">
+                                <a href="index.php?action=editar&id=<?= $p['id_producto'] ?>"
+                                class="btn btn-warning btn-sm text-white" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalBajaProducto"
+                                    data-id="<?= $p['id_producto'] ?>"
+                                    data-nombre="<?= htmlspecialchars($p['nombre']) ?>"
+                                    title="Dar de baja">
+                                    <i class="bi bi-box-arrow-down"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -108,41 +110,43 @@
             <i class="bi bi-box"></i> Productos Inactivos (baja lógica)
         </div>
         <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-                <thead class="table-secondary">
-                    <tr>
-                        <th>#</th>
-                        <th>Nombre</th>
-                        <th>Tipo</th>
-                        <th>Marca</th>
-                        <th>Talle</th>
-                        <th>Color</th>
-                        <th>Categoría</th>
-                        <th class="text-end">Precio</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($productosInactivos as $p): ?>
-                    <tr class="table-light text-muted">
-                        <td><?= $p['id_producto'] ?></td>
-                        <td><?= htmlspecialchars($p['nombre']) ?></td>
-                        <td><?= htmlspecialchars($p['tipodezapatillas']) ?></td>
-                        <td><?= htmlspecialchars($p['marca'] ?? '—') ?></td>
-                        <td><?= htmlspecialchars($p['talle'] ?? '—') ?></td>
-                        <td><?= htmlspecialchars($p['color'] ?? '—') ?></td>
-                        <td><?= htmlspecialchars($p['categoria'] ?? '—') ?></td>
-                        <td class="text-end">$<?= number_format($p['precio'], 2, ',', '.') ?></td>
-                        <td class="text-center">
-                            <a href="index.php?action=reactivar_producto&id=<?= $p['id_producto'] ?>"
-                            class="btn btn-success btn-sm" title="Reactivar producto">
-                                <i class="bi bi-box-arrow-up"></i> Reactivar
-                            </a>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Marca</th>
+                            <th>Talle</th>
+                            <th>Color</th>
+                            <th>Categoría</th>
+                            <th class="text-end">Precio</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($productosInactivos as $p): ?>
+                        <tr class="table-light text-muted">
+                            <td><?= $p['id_producto'] ?></td>
+                            <td><?= htmlspecialchars($p['nombre']) ?></td>
+                            <td><?= htmlspecialchars($p['tipodezapatillas']) ?></td>
+                            <td><?= htmlspecialchars($p['marca'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($p['talle'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($p['color'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($p['categoria'] ?? '—') ?></td>
+                            <td class="text-end">$<?= number_format($p['precio'], 2, ',', '.') ?></td>
+                            <td class="text-center">
+                                <a href="index.php?action=reactivar_producto&id=<?= $p['id_producto'] ?>"
+                                class="btn btn-success btn-sm" title="Reactivar producto">
+                                    <i class="bi bi-box-arrow-up"></i> Reactivar
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
     <?php endif; ?>

@@ -6,6 +6,7 @@ require_once '../app/ayudantes/Auth.php';
 require_once '../app/controllers/AuthController.php';
 require_once '../app/controllers/ProductController.php';
 require_once '../app/controllers/PerfilController.php';
+require_once '../app/controllers/UsuarioController.php';
 require_once "../app/controllers/DashboardController.php";
 require_once "../app/controllers/ClienteController.php";
 require_once "../app/controllers/InventarioController.php";
@@ -18,6 +19,7 @@ $dashboard  = new DashboardController();
 $cliente    = new ClienteController();
 $inventario = new InventarioController();
 $venta      = new VentaController();
+$usuarioCtrl = new UsuarioController();
 
 if (!isset($_GET['action'])) {
     if (isset($_SESSION['user'])) {
@@ -165,6 +167,22 @@ switch ($action) {
         break;
     case 'reactivar_perfil':
         $perfil->reactivar();
+        break;
+    //USUARIO
+    case 'usuarios':
+        $usuarioCtrl->index();
+        break;
+    case 'edit_usuario':
+        $usuarioCtrl->edit();
+        break;
+    case 'update_usuario':
+        $usuarioCtrl->update();
+        break;
+    case 'delete_usuario':
+        $usuarioCtrl->delete();
+        break;
+    case 'reactivar_usuario':
+        $usuarioCtrl->reactivar();
         break;
     default:
         echo "ERROR";

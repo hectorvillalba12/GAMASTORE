@@ -2,6 +2,7 @@
 <html>
 <head>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 
 <body class="bg-dark d-flex justify-content-center align-items-center vh-100">
@@ -56,8 +57,21 @@
         </div>
     <?php endif; ?>
 
-<?php endif; ?>
+    <?php if($_GET['msg'] == 'error_login'): ?>
+        <div class="alert alert-danger text-center">
+            <i class="bi bi-exclamation-circle me-1"></i>
+            Email o contraseña incorrectos.
+        </div>
+    <?php endif; ?>
 
+    <?php if($_GET['msg'] == 'usuario_inactivo'): ?>
+        <div class="alert alert-warning text-center">
+            <i class="bi bi-person-x me-1"></i>
+            Tu cuenta está inactiva. Contactá al administrador.
+        </div>
+    <?php endif; ?>
+
+<?php endif; ?>
 
 <form method="POST" action="index.php?action=loginPost">
 

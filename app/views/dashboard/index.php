@@ -11,9 +11,28 @@
 
 <div class="container mt-5">
 
-    <h1 class="text-center mb-5">
-        <i class="bi bi-shop"></i>  GamaStore
-    </h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="bi bi-shop"></i> GamaStore
+        </h1>
+        <a href="index.php?action=logout" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+        </a>
+    </div>
+
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'acceso_denegado'): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-lock-fill me-1"></i> No tenés permisos para acceder a esa sección.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'sin_perfil'): ?>
+        <div class="alert alert-warning alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-1"></i> Tu usuario no tiene un perfil asignado. Contactá al administrador.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
 
     <div class="row g-4">
 
@@ -61,6 +80,30 @@
                     <h4>Ventas</h4>
                     <p class="text-muted">Ventas de GamaStore</p>
                     <a href="index.php?action=ventas" class="btn btn-info w-100 text-white">Ir a Ventas</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- USUARIOS -->
+        <div class="col-md-4">
+            <div class="card shadow text-center h-100">
+                <div class="card-body p-4">
+                    <i class="bi bi-person-gear fs-1 text-secondary mb-3"></i>
+                    <h4>Usuarios</h4>
+                    <p class="text-muted">Gestionar usuarios y perfiles asignados</p>
+                    <a href="index.php?action=usuarios" class="btn btn-secondary w-100">Ir a Usuarios</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- PERFILES -->
+        <div class="col-md-4">
+            <div class="card shadow text-center h-100">
+                <div class="card-body p-4">
+                    <i class="bi bi-person-badge fs-1 text-danger mb-3"></i>
+                    <h4>Perfiles</h4>
+                    <p class="text-muted">Gestionar perfiles y módulos asignados</p>
+                    <a href="index.php?action=perfiles" class="btn btn-danger w-100">Ir a Perfiles</a>
                 </div>
             </div>
         </div>

@@ -49,56 +49,58 @@
             <i class="bi bi-person-badge"></i> Perfiles Activos
         </div>
         <div class="card-body p-0">
-            <table class="table table-hover table-striped mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th>#</th>
-                        <th>Nombre</th>
-                        <th>Descripción</th>
-                        <th>Módulos asignados</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php if (empty($perfiles)): ?>
-                    <tr>
-                        <td colspan="5" class="text-center text-muted py-4">No hay perfiles activos.</td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach ($perfiles as $p): ?>
-                    <tr>
-                        <td><?= $p['id_perfil'] ?></td>
-                        <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
-                        <td><?= htmlspecialchars($p['descripcion'] ?? '—') ?></td>
-                        <td>
-                            <?php
-                            $db      = (new Database())->connect();
-                            $perfil  = new Perfil($db);
-                            $modulos = $perfil->obtenerModulos($p['id_perfil']);
-                            foreach ($modulos as $m):
-                            ?>
-                                <span class="badge bg-primary me-1"><?= ucfirst($m) ?></span>
-                            <?php endforeach; ?>
-                        </td>
-                        <td class="text-center">
-                            <a href="index.php?action=edit_perfil&id=<?= $p['id_perfil'] ?>"
-                            class="btn btn-warning btn-sm text-white" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button class="btn btn-danger btn-sm"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalBajaPerfil"
-                                data-id="<?= $p['id_perfil'] ?>"
-                                data-nombre="<?= htmlspecialchars($p['nombre']) ?>"
-                                title="Dar de baja">
-                                <i class="bi bi-dash-circle"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Módulos asignados</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if (empty($perfiles)): ?>
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No hay perfiles activos.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($perfiles as $p): ?>
+                        <tr>
+                            <td><?= $p['id_perfil'] ?></td>
+                            <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
+                            <td><?= htmlspecialchars($p['descripcion'] ?? '—') ?></td>
+                            <td>
+                                <?php
+                                $db      = (new Database())->connect();
+                                $perfil  = new Perfil($db);
+                                $modulos = $perfil->obtenerModulos($p['id_perfil']);
+                                foreach ($modulos as $m):
+                                ?>
+                                    <span class="badge bg-primary me-1"><?= ucfirst($m) ?></span>
+                                <?php endforeach; ?>
+                            </td>
+                            <td class="text-center">
+                                <a href="index.php?action=edit_perfil&id=<?= $p['id_perfil'] ?>"
+                                class="btn btn-warning btn-sm text-white" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalBajaPerfil"
+                                    data-id="<?= $p['id_perfil'] ?>"
+                                    data-nombre="<?= htmlspecialchars($p['nombre']) ?>"
+                                    title="Dar de baja">
+                                    <i class="bi bi-dash-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -109,31 +111,33 @@
             <i class="bi bi-person-x"></i> Perfiles Inactivos (baja lógica)
         </div>
         <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-                <thead class="table-secondary">
-                    <tr>
-                        <th>#</th>
-                        <th>Nombre</th>
-                        <th>Descripción</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($perfilesInactivos as $p): ?>
-                    <tr class="table-light text-muted">
-                        <td><?= $p['id_perfil'] ?></td>
-                        <td><?= htmlspecialchars($p['nombre']) ?></td>
-                        <td><?= htmlspecialchars($p['descripcion'] ?? '—') ?></td>
-                        <td class="text-center">
-                            <a href="index.php?action=reactivar_perfil&id=<?= $p['id_perfil'] ?>"
-                            class="btn btn-success btn-sm">
-                                <i class="bi bi-check-circle"></i> Reactivar
-                            </a>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($perfilesInactivos as $p): ?>
+                        <tr class="table-light text-muted">
+                            <td><?= $p['id_perfil'] ?></td>
+                            <td><?= htmlspecialchars($p['nombre']) ?></td>
+                            <td><?= htmlspecialchars($p['descripcion'] ?? '—') ?></td>
+                            <td class="text-center">
+                                <a href="index.php?action=reactivar_perfil&id=<?= $p['id_perfil'] ?>"
+                                class="btn btn-success btn-sm">
+                                    <i class="bi bi-check-circle"></i> Reactivar
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
     <?php endif; ?>

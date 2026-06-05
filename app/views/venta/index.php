@@ -31,41 +31,43 @@
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
-            <table class="table table-hover table-striped mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th>#</th>
-                        <th>Fecha</th>
-                        <th>Cliente</th>
-                        <th class="text-end">Total</th>
-                        <th>Método de Pago</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php if (empty($ventas)): ?>
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-4">No hay ventas registradas.</td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach ($ventas as $v): ?>
-                    <tr>
-                        <td><?= $v['id_venta'] ?></td>
-                        <td><?= date('d/m/Y H:i', strtotime($v['fecha'])) ?></td>
-                        <td><?= htmlspecialchars($v['nombre_cliente'] ?? 'Consumidor final') ?></td>
-                        <td class="text-end fw-bold">$<?= number_format($v['total'], 2) ?></td>
-                        <td><?= htmlspecialchars($v['metodo_de_pago']) ?></td>
-                        <td class="text-center">
-                            <a href="index.php?action=ventas_ver&id=<?= $v['id_venta'] ?>"
-                            class="btn btn-info btn-sm text-white" title="Ver detalle">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th class="text-end">Total</th>
+                            <th>Método de Pago</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if (empty($ventas)): ?>
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No hay ventas registradas.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($ventas as $v): ?>
+                        <tr>
+                            <td><?= $v['id_venta'] ?></td>
+                            <td><?= date('d/m/Y H:i', strtotime($v['fecha'])) ?></td>
+                            <td><?= htmlspecialchars($v['nombre_cliente'] ?? 'Consumidor final') ?></td>
+                            <td class="text-end fw-bold">$<?= number_format($v['total'], 2) ?></td>
+                            <td><?= htmlspecialchars($v['metodo_de_pago']) ?></td>
+                            <td class="text-center">
+                                <a href="index.php?action=ventas_ver&id=<?= $v['id_venta'] ?>"
+                                class="btn btn-info btn-sm text-white" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
