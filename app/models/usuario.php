@@ -40,6 +40,12 @@ class Usuario {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    // CONTAR admins activos
+    public function contarAdminsActivos() {
+        $sql  = "SELECT COUNT(*) FROM usuario WHERE rol = 'admin' AND estado = 'activo'";
+        return $this->conn->query($sql)->fetchColumn();
+    }
+
     // ACTUALIZAR perfil y rol de un usuario
     public function actualizar($id, $rol, $perfil_id) {
         $sql  = "UPDATE usuario SET rol = :rol, perfil_id = :perfil_id WHERE id_usuario = :id";

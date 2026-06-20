@@ -14,7 +14,7 @@
         <i class="bi bi-person-plus"></i> Crear cuenta
     </h3>
 
-    <!-- Mensajes de error del servidor -->
+    
     <?php if (isset($_GET['error'])): ?>
         <?php if ($_GET['error'] === 'passwords_no_coinciden'): ?>
             <div class="alert alert-danger text-center py-2">
@@ -49,7 +49,7 @@
         </div>
 
         <div class="mb-3">
-            <!-- ÍTEM 6: Campo confirmar contraseña -->
+        
             <label class="form-label">Confirmar contraseña</label>
             <input type="password" name="confirmar_password" id="confirmar_password"
                 class="form-control" required placeholder="Repetí la contraseña">
@@ -118,7 +118,7 @@ function validarPasswords() {
 pass.addEventListener('input', validarPasswords);
 confirm.addEventListener('input', validarPasswords);
 
-// ÍTEM 6: Validación también al intentar enviar el form
+//  Validación también al intentar enviar el form
 document.getElementById('formRegistro').addEventListener('submit', function(e) {
     if (pass.value !== confirm.value) {
         e.preventDefault();

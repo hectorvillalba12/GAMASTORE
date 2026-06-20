@@ -34,9 +34,22 @@
         </div>
     <?php endif; ?>
 
+    <?php
+    // Obtener módulos del perfil del usuario logueado
+    $modulosUsuario = [];
+    $perfil_id = $_SESSION['usuario']['perfil_id'] ?? null;
+    if ($perfil_id) {
+        $db   = (new Database())->connect();
+        $stmt = $db->prepare("SELECT modulo FROM perfil_has_modulo WHERE perfil_id = :perfil_id");
+        $stmt->execute(['perfil_id' => $perfil_id]);
+        $modulosUsuario = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'modulo');
+    }
+    ?>
+
     <div class="row g-4">
 
         <!-- CLIENTES -->
+        <?php if (in_array('clientes', $modulosUsuario)): ?>
         <div class="col-md-4">
             <div class="card shadow text-center h-100">
                 <div class="card-body p-4">
@@ -47,8 +60,10 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- PRODUCTOS -->
+        <?php if (in_array('productos', $modulosUsuario)): ?>
         <div class="col-md-4">
             <div class="card shadow text-center h-100">
                 <div class="card-body p-4">
@@ -59,8 +74,10 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- INVENTARIO -->
+        <?php if (in_array('inventario', $modulosUsuario)): ?>
         <div class="col-md-4">
             <div class="card shadow text-center h-100">
                 <div class="card-body p-4">
@@ -71,8 +88,10 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- VENTAS -->
+        <?php if (in_array('ventas', $modulosUsuario)): ?>
         <div class="col-md-4">
             <div class="card shadow text-center h-100">
                 <div class="card-body p-4">
@@ -83,8 +102,10 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- USUARIOS -->
+        <?php if (in_array('usuarios', $modulosUsuario)): ?>
         <div class="col-md-4">
             <div class="card shadow text-center h-100">
                 <div class="card-body p-4">
@@ -95,8 +116,10 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- PERFILES -->
+        <?php if (in_array('perfiles', $modulosUsuario)): ?>
         <div class="col-md-4">
             <div class="card shadow text-center h-100">
                 <div class="card-body p-4">
@@ -107,6 +130,7 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
     </div><!-- fin .row -->
 

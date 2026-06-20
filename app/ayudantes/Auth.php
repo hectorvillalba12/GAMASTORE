@@ -7,7 +7,8 @@ class Auth {
             exit();
         }
 
-        if ($_SESSION['usuario']['rol'] !== 'admin') {
+        $rolesPermitidos = ['admin', 'empleado'];
+        if (!in_array($_SESSION['usuario']['rol'], $rolesPermitidos)) {
             header("Location: index.php?action=login&msg=acceso_denegado");
             exit();
         }

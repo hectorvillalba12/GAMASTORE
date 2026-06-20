@@ -108,7 +108,7 @@
     <?php if (!empty($perfilesInactivos)): ?>
     <div class="card shadow-sm border-secondary mb-4">
         <div class="card-header bg-secondary text-white">
-            <i class="bi bi-person-x"></i> Perfiles Inactivos (baja lógica)
+            <i class="bi bi-person-x"></i> Perfiles Inactivos 
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">

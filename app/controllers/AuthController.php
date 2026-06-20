@@ -207,8 +207,12 @@ class AuthController {
 
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
-        $stmt = $conn->prepare("INSERT INTO usuario (email, password, rol, perfil_id) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$email, $hash, $rol, 1]);
+        // Si es empleado se crea inactivo, si es admin se crea activo
+        $estado = ($rol === 'empleado') ? 'inactivo' : 'activo';
+
+        $stmt = $conn->prepare("INSERT INTO usuario (email, password, rol, perfil_id, estado) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$email, $hash, $rol, $perfil_id, $estado]);
+
 
         header("Location: index.php?action=login&msg=registro_ok");
         exit();

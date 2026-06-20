@@ -4,7 +4,7 @@ require_once __DIR__ . '/../models/Perfil.php';
 class PerfilController {
 
     private $perfil;
-    private $modulos = ['dashboard', 'productos', 'clientes', 'inventario', 'ventas'];
+    private $modulos = ['dashboard', 'productos', 'clientes', 'inventario', 'ventas', 'usuarios', 'perfiles'];
 
     public function __construct() {
         $db           = (new Database())->connect();

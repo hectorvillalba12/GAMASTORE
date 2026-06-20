@@ -38,6 +38,14 @@
         </div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['error']) && $_GET['error'] === 'unico_admin'): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-shield-lock-fill me-1"></i>
+            No podés modificar ni dar de baja a este usuario porque es el <strong>único administrador activo</strong> del sistema.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+
     <!-- USUARIOS ACTIVOS -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-dark text-white">
@@ -62,6 +70,7 @@
                         </tr>
                     <?php else: ?>
                         <?php foreach ($usuarios as $u): ?>
+                        <?php $esUnicoAdmin = ($u['rol'] === 'admin' && $totalAdminsActivos <= 1); ?>
                         <tr>
                             <td><?= $u['id_usuario'] ?></td>
                             <td><?= htmlspecialchars($u['email']) ?></td>
@@ -74,18 +83,27 @@
                                 <?php endif; ?>
                             </td>
                             <td class="text-center">
-                                <a href="index.php?action=edit_usuario&id=<?= $u['id_usuario'] ?>"
-                                class="btn btn-warning btn-sm text-white" title="Editar">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <button class="btn btn-danger btn-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalBajaUsuario"
-                                    data-id="<?= $u['id_usuario'] ?>"
-                                    data-email="<?= htmlspecialchars($u['email']) ?>"
-                                    title="Dar de baja">
-                                    <i class="bi bi-person-dash"></i>
-                                </button>
+                                <?php if ($esUnicoAdmin): ?>
+                                    <button class="btn btn-warning btn-sm text-white" disabled title="Único administrador activo">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" disabled title="Único administrador activo">
+                                        <i class="bi bi-shield-lock"></i>
+                                    </button>
+                                <?php else: ?>
+                                    <a href="index.php?action=edit_usuario&id=<?= $u['id_usuario'] ?>"
+                                    class="btn btn-warning btn-sm text-white" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button class="btn btn-danger btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalBajaUsuario"
+                                        data-id="<?= $u['id_usuario'] ?>"
+                                        data-email="<?= htmlspecialchars($u['email']) ?>"
+                                        title="Dar de baja">
+                                        <i class="bi bi-person-dash"></i>
+                                    </button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

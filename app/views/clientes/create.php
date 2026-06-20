@@ -17,7 +17,7 @@
         </a>
     </div>
 
-    <!-- ÍTEM 3: Mensajes de error de validación de unicidad -->
+
     <?php if (isset($_GET['error'])): ?>
         <?php if ($_GET['error'] === 'dni_duplicado'): ?>
             <div class="alert alert-danger alert-dismissible fade show">
@@ -56,7 +56,7 @@
                         <input type="text" name="telefono" class="form-control">
                     </div>
                     <div class="col-md-4">
-                        <!-- ÍTEM 11: Nota sobre verificación de email -->
+                        
                         <label class="form-label">
                             Email
                             <small class="text-muted">(se enviará un correo de verificación)</small>

@@ -57,7 +57,7 @@ switch ($action) {
         $auth->resetPassword();
         break;
 
-    // ÍTEM 6: Registro de usuario con confirmación de contraseña
+    //  Registro de usuario con confirmación de contraseña
     case 'register':
         $auth->showRegister();
         break;

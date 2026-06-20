@@ -34,7 +34,7 @@
                     <label class="form-label">Rol</label>
                     <select name="rol" class="form-select">
                         <option value="admin" <?= $usuario['rol'] === 'admin' ? 'selected' : '' ?>>Admin</option>
-                        <option value="vendedor" <?= $usuario['rol'] === 'vendedor' ? 'selected' : '' ?>>Vendedor</option>
+                        <option value="empleado" <?= $usuario['rol'] === 'empleado' ? 'selected' : '' ?>>Empleado</option>
                     </select>
                 </div>
 

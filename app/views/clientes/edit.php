@@ -17,7 +17,7 @@
         </a>
     </div>
 
-    <!-- ÍTEM 3: Mensajes de error de unicidad -->
+    
     <?php if (isset($_GET['error'])): ?>
         <?php if ($_GET['error'] === 'dni_duplicado'): ?>
             <div class="alert alert-danger alert-dismissible fade show">
@@ -38,9 +38,9 @@
         <div class="card-body">
             <form method="POST" action="index.php?action=update_cliente">
 
-                <!-- ÍTEM 4: id_persona para actualizar la tabla persona -->
+                
                 <input type="hidden" name="id_persona" value="<?= $cliente['id_persona'] ?>">
-                <!-- ÍTEM 4: id_cliente para excluir al propio cliente en validación de unicidad -->
+                 
                 <input type="hidden" name="id_cliente" value="<?= $cliente['id_cliente'] ?>">
 
                 <div class="row g-3">
