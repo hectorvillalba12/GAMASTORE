@@ -1,10 +1,10 @@
 <?php
-require_once __DIR__ . '/../models/Perfil.php';
+require_once __DIR__ . '/perfil.php';
 
 class PerfilController {
 
     private $perfil;
-    private $modulos = ['dashboard', 'productos', 'clientes', 'inventario', 'ventas', 'usuarios', 'perfiles'];
+    private $modulos = ['dashboard', 'productos', 'clientes', 'inventario', 'ventas', 'usuarios', 'perfiles', 'promociones', 'reportes'];
 
     public function __construct() {
         $db           = (new Database())->connect();
@@ -16,14 +16,14 @@ class PerfilController {
         Auth::verificar();
         $perfiles          = $this->perfil->listar();
         $perfilesInactivos = $this->perfil->listarInactivos();
-        require __DIR__ . '/../views/perfiles/index.php';
+        require __DIR__ . '/views/index.php';
     }
 
     // MOSTRAR FORM CREAR
     public function create() {
         Auth::verificar();
         $modulos = $this->modulos;
-        require __DIR__ . '/../views/perfiles/create.php';
+        require __DIR__ . '/views/create.php';
     }
 
     // GUARDAR nuevo perfil
@@ -52,7 +52,7 @@ class PerfilController {
         $perfil  = $this->perfil->obtener($id);
         $modulos = $this->modulos;
         $modulosDelPerfil = $this->perfil->obtenerModulos($id);
-        require __DIR__ . '/../views/perfiles/edit.php';
+        require __DIR__ . '/views/edit.php';
     }
 
     // ACTUALIZAR perfil

@@ -15,6 +15,17 @@
             <i class="bi bi-arrow-left"></i> Volver
         </a>
     </div>
+    <?php
+    $errores = [
+        'sin_productos'      => 'Agregá al menos un producto a la venta.',
+        'stock_insuficiente' => 'Uno de los productos seleccionados no tiene stock suficiente.',
+        'error_al_guardar'   => 'Ocurrió un error al registrar la venta. Intentá de nuevo.',
+    ];
+    if (isset($_GET['error']) && isset($errores[$_GET['error']])): ?>
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> <?= $errores[$_GET['error']] ?>
+        </div>
+    <?php endif; ?>
 
     <form action="index.php?action=ventas_guardar" method="POST">
 
@@ -99,7 +110,8 @@
 </div>
 
 <script>
-const productosData = <?= json_encode($productos) ?>;
+const productosData      = <?= json_encode($productos) ?>;
+const promosPorProducto   = <?= json_encode($promosPorProducto) ?>;
 
 function agregarFila() {
     const tbody = document.getElementById('filas_productos');
@@ -107,10 +119,16 @@ function agregarFila() {
 
     let options = '<option value="">-- Producto --</option>';
     productosData.forEach(p => {
-        options += `<option value="${p.id_producto}" data-precio="${p.precio}" data-stock="${p.stock_actual ?? 0}">
-                        ${p.nombre} (Stock: ${p.stock_actual ?? 0})
-                    </option>`;
-    });
+    const promo = promosPorProducto[p.id_producto];
+    const etiquetaPromo = promo
+        ? (promo.tipo_descuento === 'porcentaje'
+            ? ` 🏷️ -${promo.descuento_porcentaje}%`
+            : ` 🏷️ -$${parseFloat(promo.monto_fijo).toFixed(2)}`)
+        : '';
+    options += `<option value="${p.id_producto}" data-precio="${p.precio}" data-stock="${p.stock_actual ?? 0}">
+                    ${p.nombre} (Stock: ${p.stock_actual ?? 0})${etiquetaPromo}
+                </option>`;
+});
 
     const tr = document.createElement('tr');
     tr.dataset.idx = idx;
@@ -123,6 +141,7 @@ function agregarFila() {
         <td class="text-center align-middle">
             <span id="stock_${idx}">—</span>
             <input type="hidden" name="precio_unitario[]" id="precio_${idx}" value="0">
+            <input type="hidden" name="nombre_producto[]" id="nombre_${idx}" value="">
         </td>
         <td>
             <input type="number" name="cantidad[]" id="cant_${idx}"
@@ -147,6 +166,7 @@ function alSeleccionar(sel, idx) {
     const stock  = parseInt(opt.dataset.stock || 0);
 
     document.getElementById(`precio_${idx}`).value              = precio;
+    document.getElementById(`nombre_${idx}`).value               = opt.textContent.trim(); // <-- nueva línea
     document.getElementById(`stock_${idx}`).textContent         = stock;
     document.getElementById(`precio_label_${idx}`).textContent  = '$' + precio.toFixed(2);
     document.getElementById(`cant_${idx}`).max                  = stock;

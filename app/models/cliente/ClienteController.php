@@ -1,7 +1,6 @@
 <?php
-require_once __DIR__ . '/../../config/Database.php';
-require_once __DIR__ . '/../models/Persona.php';
-require_once __DIR__ . '/../models/Cliente.php';
+require_once __DIR__ . '/Persona.php';
+require_once __DIR__ . '/Cliente.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -23,12 +22,12 @@ class ClienteController {
         Auth::verificarModulo('clientes');
         $clientes          = $this->cliente->listar();
         $clientesInactivos = $this->cliente->listarInactivos();
-        require __DIR__ . '/../views/clientes/index.php';
+        require __DIR__ . '/views/index.php';
     }
 
     public function create() {
         Auth::verificarModulo('clientes');
-        require __DIR__ . '/../views/clientes/create.php';
+        require __DIR__ . '/views/create.php';
     }
 
     public function store() {
@@ -79,7 +78,7 @@ class ClienteController {
             header("Location: index.php?action=clientes");
             exit();
         }
-        require __DIR__ . '/../views/clientes/edit.php';
+        require __DIR__ . '/views/edit.php';
     }
 
     public function update() {
@@ -145,7 +144,7 @@ class ClienteController {
     }
 
     private function enviarEmailVerificacion($email, $nombre) {
-        require_once __DIR__ . '/../../vendor/autoload.php';
+        require_once __DIR__ . '/../../../vendor/autoload.php';
 
         $mail = new PHPMailer(true);
         try {

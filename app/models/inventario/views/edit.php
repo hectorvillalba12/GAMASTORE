@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Inventario - GamaStore</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -14,8 +15,8 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-warning text-dark">
                     <h5 class="mb-0">
-                        <i class="bi bi-pencil-square"></i> 
-                        Editar Stock — <?= htmlspecialchars($item['nombre_producto']) ?>
+                        <i class="bi bi-pencil-square"></i>
+                        Editar Inventario — <?= htmlspecialchars($item['nombre_producto']) ?>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -26,15 +27,20 @@
                         </div>
                     <?php endif; ?>
 
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle"></i>
+                        Si modificás el "Stock Actual" acá, queda registrado como un <strong>ajuste manual</strong> en el historial.
+                        Para entradas o salidas normales, usá los botones correspondientes desde el listado.
+                    </div>
+
                     <form action="index.php?action=inventario_actualizar" method="POST">
 
                         <input type="hidden" name="id_inventario"        value="<?= $item['id_inventario'] ?>">
                         <input type="hidden" name="producto_id_producto" value="<?= $item['producto_id_producto'] ?>">
 
-                        <!-- Info del producto (solo lectura) -->
                         <div class="mb-3">
                             <label class="form-label text-muted">Producto</label>
-                            <input type="text" class="form-control" 
+                            <input type="text" class="form-control"
                                 value="<?= htmlspecialchars($item['nombre_producto']) ?>" disabled>
                         </div>
 

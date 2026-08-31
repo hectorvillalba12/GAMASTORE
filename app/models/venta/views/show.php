@@ -46,26 +46,34 @@
 
             <table class="table table-bordered">
                 <thead class="table-dark">
-                    <tr>
-                        <th>Producto</th>
-                        <th class="text-center">Descripción</th>
-                        <th class="text-end">Precio Unit.</th>
-                        <th class="text-end">Subtotal</th>
-                        <th class="text-end">IVA (21%)</th>
-                        <th class="text-end">Total c/IVA</th>
-                    </tr>
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-center">Descripción</th>
+                    <th class="text-end">Precio Unit.</th>
+                    <th class="text-end">Descuento</th>
+                    <th class="text-end">Subtotal</th>
+                    <th class="text-end">IVA (21%)</th>
+                    <th class="text-end">Total c/IVA</th>
+                </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($detalle as $d): ?>
-                <tr>
-                    <td><?= htmlspecialchars($d['nombre_producto']) ?></td>
-                    <td><?= htmlspecialchars($d['descripcion']) ?></td>
-                    <td class="text-end">$<?= number_format($d['precio_producto'], 2) ?></td>
-                    <td class="text-end">$<?= number_format($d['total_venta'], 2) ?></td>
-                    <td class="text-end"><?= number_format($d['IVA'] * 100, 0) ?>%</td>
-                    <td class="text-end">$<?= number_format($d['precio_final'], 2) ?></td>
-                </tr>
-                <?php endforeach; ?>
+                    <?php foreach ($detalle as $d): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($d['nombre_producto']) ?></td>
+                            <td><?= htmlspecialchars($d['descripcion']) ?></td>
+                            <td class="text-end">$<?= number_format($d['precio_producto'], 2) ?></td>
+                            <td class="text-end">
+                                <?php if ($d['descuento'] > 0): ?>
+                                <span class="text-danger">-$<?= number_format($d['descuento'], 2) ?></span>
+                                <?php else: ?>
+                                —
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end">$<?= number_format($d['total_venta'], 2) ?></td>
+                            <td class="text-end"><?= number_format($d['IVA'] * 100, 0) ?>%</td>
+                            <td class="text-end">$<?= number_format($d['precio_final'], 2) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
                 </tbody>
                 <tfoot>
                     <tr class="fw-bold fs-5">

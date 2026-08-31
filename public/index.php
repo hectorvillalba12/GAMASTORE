@@ -3,14 +3,17 @@ session_start();
 
 require_once '../config/database.php';
 require_once '../app/ayudantes/Auth.php';
-require_once '../app/controllers/AuthController.php';
-require_once '../app/controllers/ProductController.php';
-require_once '../app/controllers/PerfilController.php';
-require_once '../app/controllers/UsuarioController.php';
-require_once "../app/controllers/DashboardController.php";
-require_once "../app/controllers/ClienteController.php";
-require_once "../app/controllers/InventarioController.php";
-require_once "../app/controllers/VentaController.php";
+require_once '../app/ayudantes/Auditoria.php';
+require_once '../app/models/auth/AuthController.php';
+require_once '../app/models/producto/ProductController.php';
+require_once '../app/models/perfil/PerfilController.php';
+require_once '../app/models/usuario/UsuarioController.php';
+require_once "../app/models/dashboard/DashboardController.php";
+require_once "../app/models/cliente/ClienteController.php";
+require_once "../app/models/inventario/InventarioController.php";
+require_once "../app/models/venta/VentaController.php";
+require_once "../app/models/promocion/PromocionController.php";
+require_once "../app/models/reporte/ReporteController.php";
 
 $auth       = new AuthController();
 $product    = new ProductController();
@@ -20,6 +23,9 @@ $cliente    = new ClienteController();
 $inventario = new InventarioController();
 $venta      = new VentaController();
 $usuarioCtrl = new UsuarioController();
+$promocion = new PromocionController();
+$reporte = new ReporteController();
+
 
 if (!isset($_GET['action'])) {
     if (isset($_SESSION['user'])) {
@@ -31,6 +37,7 @@ if (!isset($_GET['action'])) {
 }
 
 $action = $_GET['action'];
+
 
 switch ($action) {
 
@@ -71,6 +78,7 @@ switch ($action) {
         break;
 
     // INVENTARIO
+        // INVENTARIO
     case 'inventario':
         $inventario->index();
         break;
@@ -79,6 +87,27 @@ switch ($action) {
         break;
     case 'inventario_actualizar':
         $inventario->update();
+        break;
+    case 'inventario_crear':
+        (new InventarioController())->create();
+        break;
+    case 'inventario_guardar':
+        (new InventarioController())->store();
+        break;
+    case 'inventario_entrada':
+        (new InventarioController())->entradaForm();
+        break;
+    case 'inventario_entrada_guardar':
+        (new InventarioController())->entradaGuardar();
+        break;
+    case 'inventario_salida':
+        (new InventarioController())->salidaForm();
+        break;
+    case 'inventario_salida_guardar':
+        (new InventarioController())->salidaGuardar();
+        break;
+    case 'inventario_historial':
+        (new InventarioController())->historial();
         break;
 
     // PRODUCTOS
@@ -105,6 +134,10 @@ switch ($action) {
         break;
     case 'excel':
         $product->exportExcel();
+        break;
+
+    case 'productos_auditoria':
+        $product->auditoria();
         break;
 
     // CLIENTES
@@ -183,6 +216,50 @@ switch ($action) {
         break;
     case 'reactivar_usuario':
         $usuarioCtrl->reactivar();
+        break;
+        // PROMOCIONES
+    case 'promociones':
+        (new PromocionController())->index();
+        break;
+    case 'promociones_crear':
+        (new PromocionController())->create();
+        break;
+    case 'promociones_guardar':
+        (new PromocionController())->store();
+        break;
+    case 'promociones_editar':
+        (new PromocionController())->edit();
+        break;
+    case 'promociones_actualizar':
+        (new PromocionController())->update();
+        break;
+    case 'promociones_eliminar':
+        (new PromocionController())->delete();
+        break;
+    case 'promociones_reactivar':
+        (new PromocionController())->reactivar();
+        break;
+        // REPORTES
+    case 'reportes':
+        (new ReporteController())->index();
+        break;
+    case 'reportes_ventas':
+        (new ReporteController())->ventas();
+        break;
+    case 'reportes_productos':
+        (new ReporteController())->productos();
+        break;
+    case 'reportes_stock':
+        (new ReporteController())->stock();
+        break;
+    case 'reportes_clientes':
+        (new ReporteController())->clientes();
+        break;
+    case 'reportes_promociones':
+        (new ReporteController())->promociones();
+        break;
+    case 'reportes_excel':
+        (new ReporteController())->exportExcel();
         break;
     default:
         echo "ERROR";

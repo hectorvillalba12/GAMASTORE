@@ -5,21 +5,28 @@ use PHPMailer\PHPMailer\SMTP;
 
 class AuthController {
 
+    private $usuario;
+
+    public function __construct() {
+        $db            = (new Database())->connect();
+        $this->usuario = new Usuario($db);
+    }
+
+    // VALIDAR CONTRASEÑA SEGURA: mínimo 8 caracteres, 1 mayúscula y 1 carácter especial
+    private function passwordSegura($password) {
+        return preg_match('/^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>_\-+=~`\[\];\'\/\\\\]).{8,}$/', $password);
+    }
+
     public function showLogin() {
-        include '../app/views/auth/login.php';
+        include __DIR__ . '/Views/login.php';
     }
 
     public function login() {
 
-        $db = new Database();
-        $conn = $db->connect();
-
-        $email = $_POST['email'];
+        $email    = $_POST['email'];
         $password = $_POST['password'];
 
-        $stmt = $conn->prepare("SELECT * FROM usuario WHERE email=?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
+        $user = $this->usuario->buscarPorEmail($email);
 
         if ($user && $user['estado'] === 'inactivo') {
             header("Location: index.php?action=login&msg=usuario_inactivo");
@@ -30,27 +37,16 @@ class AuthController {
 
             // HASH
             if (password_verify($password, $user['password'])) {
-
-                $stmt2 = $conn->prepare("SELECT * FROM usuario WHERE id_usuario = ?");
-                $stmt2->execute([$user['id_usuario']]);
-                $_SESSION['usuario'] = $stmt2->fetch(PDO::FETCH_ASSOC);
-
+                $_SESSION['usuario'] = $this->usuario->obtener($user['id_usuario']);
                 header("Location: index.php?action=dashboard");
                 exit();
             }
 
-            // MD5
+            // MD5 (migración a bcrypt)
             elseif ($password === $user['password'] || md5($password) === $user['password']) {
-
                 $nuevoHash = password_hash($password, PASSWORD_DEFAULT);
-
-                $stmt = $conn->prepare("UPDATE usuario SET password=? WHERE id_usuario=?");
-                $stmt->execute([$nuevoHash, $user['id_usuario']]);
-
-                $stmt2 = $conn->prepare("SELECT * FROM usuario WHERE id_usuario = ?");
-                $stmt2->execute([$user['id_usuario']]);
-                $_SESSION['usuario'] = $stmt2->fetch(PDO::FETCH_ASSOC);
-
+                $this->usuario->actualizarPassword($user['id_usuario'], $nuevoHash);
+                $_SESSION['usuario'] = $this->usuario->obtener($user['id_usuario']);
                 header("Location: index.php?action=dashboard");
                 exit();
             }
@@ -62,50 +58,43 @@ class AuthController {
 
     // FORM OLVIDE CONTRASEÑA
     public function forgotPassword() {
-        require '../app/views/auth/forgot.php';
+        require __DIR__ . '/Views/forgot.php';
     }
 
     // ENVIAR EMAIL CON TOKEN
     public function sendReset() {
 
-        $db = new Database();
-        $conn = $db->connect();
-
         $email = $_POST['email'];
-
-        $stmt = $conn->prepare("SELECT * FROM usuario WHERE email=?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
+        $user  = $this->usuario->buscarPorEmail($email);
 
         if ($user) {
 
-            $token = bin2hex(random_bytes(50));
+            $token  = bin2hex(random_bytes(50));
             $expira = date("Y-m-d H:i:s", strtotime("+1 hour"));
 
-            $stmt = $conn->prepare("UPDATE usuario SET reset_token=?, token_expira=? WHERE id_usuario=?");
-            $stmt->execute([$token, $expira, $user['id_usuario']]);
+            $this->usuario->guardarToken($user['id_usuario'], $token, $expira);
 
             $link = "http://localhost/gamastorefinal/public/index.php?action=resetForm&token=$token";
 
-            require '../vendor/autoload.php';
+            require __DIR__ . '/../../../vendor/autoload.php';
 
             $mail = new PHPMailer(true);
 
             try {
                 $mail->isSMTP();
-                $mail->Host = 'smtp.gmail.com';
-                $mail->SMTPAuth = true;
-                $mail->Username = 'villalbahector257@gmail.com';
-                $mail->Password = 'asnh pmmf wfst igbj';
+                $mail->Host       = 'smtp.gmail.com';
+                $mail->SMTPAuth   = true;
+                $mail->Username   = 'villalbahector257@gmail.com';
+                $mail->Password   = 'asnh pmmf wfst igbj';
                 $mail->SMTPSecure = 'tls';
-                $mail->Port = 587;
+                $mail->Port       = 587;
 
                 $mail->setFrom('villalbahector257@gmail.com', 'GAMASTORE');
                 $mail->addAddress($email);
 
                 $mail->isHTML(true);
                 $mail->Subject = 'Recuperar contraseña';
-                $mail->Body = "
+                $mail->Body    = "
                     <h3>Recuperación de contraseña</h3>
                     <p>Hacé click en el siguiente enlace:</p>
                     <a href='$link'>$link</a>
@@ -126,43 +115,28 @@ class AuthController {
 
     // FORM RESET
     public function resetForm() {
-        include '../app/views/auth/reset.php';
+        include __DIR__ . '/Views/reset.php';
     }
 
     // GUARDAR NUEVA PASSWORD
     public function resetPassword() {
 
-        $db = new Database();
-        $conn = $db->connect();
-
-        $token = $_POST['token'];
+        $token    = $_POST['token'];
         $password = $_POST['password'];
 
-        $stmt = $conn->prepare("
-            SELECT * FROM usuario 
-            WHERE reset_token = ? 
-            AND token_expira > NOW()
-        ");
-        $stmt->execute([$token]);
-        $user = $stmt->fetch();
+        if (!$this->passwordSegura($password)) {
+            header("Location: index.php?action=resetForm&token=$token&error=password_debil");
+            exit();
+        }
+
+        $user = $this->usuario->buscarPorToken($token);
 
         if ($user) {
-
             $hash = password_hash($password, PASSWORD_DEFAULT);
-
-            $stmt = $conn->prepare("
-                UPDATE usuario 
-                SET password = ?, reset_token = NULL, token_expira = NULL 
-                WHERE id_usuario = ?
-            ");
-
-            if ($stmt->execute([$hash, $user['id_usuario']])) {
-                header("Location: index.php?action=login&msg=ok");
-                exit();
-            } else {
-                echo "Error al actualizar contraseña";
-            }
-
+            $this->usuario->actualizarPassword($user['id_usuario'], $hash);
+            $this->usuario->limpiarToken($user['id_usuario']);
+            header("Location: index.php?action=login&msg=ok");
+            exit();
         } else {
             header("Location: index.php?action=login&msg=error");
             exit();
@@ -175,13 +149,10 @@ class AuthController {
     }
 
     public function showRegister() {
-        include '../app/views/auth/register.php';
+        include __DIR__ . '/Views/register.php';
     }
 
     public function register() {
-
-        $db   = new Database();
-        $conn = $db->connect();
 
         $email     = trim($_POST['email']             ?? '');
         $password  = $_POST['password']               ?? '';
@@ -198,21 +169,20 @@ class AuthController {
             exit();
         }
 
-        $stmt = $conn->prepare("SELECT COUNT(*) FROM usuario WHERE email = ?");
-        $stmt->execute([$email]);
-        if ($stmt->fetchColumn() > 0) {
+        if (!$this->passwordSegura($password)) {
+            header("Location: index.php?action=register&error=password_debil");
+            exit();
+        }
+
+        if ($this->usuario->buscarPorEmail($email)) {
             header("Location: index.php?action=register&error=email_duplicado");
             exit();
         }
 
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-
-        // Si es empleado se crea inactivo, si es admin se crea activo
+        $hash   = password_hash($password, PASSWORD_DEFAULT);
         $estado = ($rol === 'empleado') ? 'inactivo' : 'activo';
 
-        $stmt = $conn->prepare("INSERT INTO usuario (email, password, rol, perfil_id, estado) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$email, $hash, $rol, $perfil_id, $estado]);
-
+        $this->usuario->registrar($email, $hash, $rol, $estado);
 
         header("Location: index.php?action=login&msg=registro_ok");
         exit();

@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../models/Usuario.php';
-require_once __DIR__ . '/../models/Perfil.php';
+require_once __DIR__ . '/usuario.php';
+require_once __DIR__ . '/../perfil/perfil.php';
 
 class UsuarioController {
 
@@ -19,7 +19,7 @@ class UsuarioController {
         $usuarios           = $this->usuario->listar();
         $usuariosInactivos  = $this->usuario->listarInactivos();
         $totalAdminsActivos = $this->usuario->contarAdminsActivos(); // <-- NUEVO
-        require __DIR__ . '/../views/usuarios/index.php';
+        require __DIR__ . '/views/index.php';
     }
 
     // MOSTRAR FORM EDITAR
@@ -40,7 +40,7 @@ class UsuarioController {
             exit();
         }
 
-        require __DIR__ . '/../views/usuarios/edit.php';
+        require __DIR__ . '/views/edit.php';
     }
 
     // ACTUALIZAR usuario

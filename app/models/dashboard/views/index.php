@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - GamaStore</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -35,7 +36,6 @@
     <?php endif; ?>
 
     <?php
-    // Obtener módulos del perfil del usuario logueado
     $modulosUsuario = [];
     $perfil_id = $_SESSION['usuario']['perfil_id'] ?? null;
     if ($perfil_id) {
@@ -84,7 +84,9 @@
                     <i class="bi bi-boxes fs-1 text-warning mb-3"></i>
                     <h4>Inventario</h4>
                     <p class="text-muted">Gestionar stock y ubicaciones</p>
-                    <a href="index.php?action=inventario" class="btn btn-warning w-100">Ir a Inventario</a>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="index.php?action=inventario" class="btn btn-warning w-100">Ir a Inventario</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -99,6 +101,20 @@
                     <h4>Ventas</h4>
                     <p class="text-muted">Ventas de GamaStore</p>
                     <a href="index.php?action=ventas" class="btn btn-info w-100 text-white">Ir a Ventas</a>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- PROMOCIONES -->
+        <?php if (in_array('promociones', $modulosUsuario)): ?>
+        <div class="col-md-4">
+            <div class="card shadow text-center h-100">
+                <div class="card-body p-4">
+                    <i class="bi bi-tags-fill fs-1 text-primary mb-3"></i>
+                    <h4>Promociones</h4>
+                    <p class="text-muted">Descuentos y promociones vigentes</p>
+                    <a href="index.php?action=promociones" class="btn btn-primary w-100">Ir a Promociones</a>
                 </div>
             </div>
         </div>
@@ -132,9 +148,23 @@
         </div>
         <?php endif; ?>
 
-    </div><!-- fin .row -->
+            <!-- REPORTES -->
+        <?php if (in_array('reportes', $modulosUsuario)): ?>
+        <div class="col-md-4">
+            <div class="card shadow text-center h-100">
+                <div class="card-body p-4">
+                    <i class="bi bi-graph-up fs-1 text-dark mb-3"></i>
+                    <h4>Reportes</h4>
+                    <p class="text-muted">Ventas, stock, clientes y promociones</p>
+                    <a href="index.php?action=reportes" class="btn btn-dark w-100">Ir a Reportes</a>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
-</div><!-- fin .container -->
+    </div>
+
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

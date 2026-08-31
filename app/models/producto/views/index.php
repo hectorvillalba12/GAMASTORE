@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos - GamaStore</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -15,6 +16,9 @@
         <div>
             <a href="index.php?action=dashboard" class="btn btn-outline-secondary btn-sm me-2">
                 <i class="bi bi-arrow-left"></i> Volver
+            </a>
+            <a href="index.php?action=productos_auditoria" class="btn btn-outline-dark btn-sm me-2">
+                <i class="bi bi-clock-history"></i> Auditoría
             </a>
             <a href="index.php?action=crear" class="btn btn-success">
                 <i class="bi bi-plus-lg"></i> Nuevo Producto

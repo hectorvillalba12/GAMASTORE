@@ -66,4 +66,42 @@ class Usuario {
         $stmt = $this->conn->prepare($sql);
         return $stmt->execute(['id' => $id]);
     }
+
+    // BUSCAR usuario por email
+    public function buscarPorEmail($email) {
+        $stmt = $this->conn->prepare("SELECT * FROM usuario WHERE email = ?");
+        $stmt->execute([$email]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // ACTUALIZAR contraseña
+    public function actualizarPassword($id, $hash) {
+        $stmt = $this->conn->prepare("UPDATE usuario SET password = ? WHERE id_usuario = ?");
+        return $stmt->execute([$hash, $id]);
+    }
+
+    // GUARDAR token de recuperación
+    public function guardarToken($id, $token, $expira) {
+        $stmt = $this->conn->prepare("UPDATE usuario SET reset_token = ?, token_expira = ? WHERE id_usuario = ?");
+        return $stmt->execute([$token, $expira, $id]);
+    }
+
+    // BUSCAR usuario por token (solo si no expiró)
+    public function buscarPorToken($token) {
+        $stmt = $this->conn->prepare("SELECT * FROM usuario WHERE reset_token = ? AND token_expira > NOW()");
+        $stmt->execute([$token]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // LIMPIAR token después de usarlo
+    public function limpiarToken($id) {
+        $stmt = $this->conn->prepare("UPDATE usuario SET reset_token = NULL, token_expira = NULL WHERE id_usuario = ?");
+        return $stmt->execute([$id]);
+    }
+
+    // REGISTRAR nuevo usuario
+    public function registrar($email, $hash, $rol, $estado) {
+        $stmt = $this->conn->prepare("INSERT INTO usuario (email, password, rol, estado) VALUES (?, ?, ?, ?)");
+        return $stmt->execute([$email, $hash, $rol, $estado]);
+    }
 }

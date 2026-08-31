@@ -4,6 +4,6 @@ class DashboardController {
 
     public function index() {
         Auth::verificar();
-        require __DIR__ . "/../views/dashboard/index.php";
+        require __DIR__ . "/views/index.php";
     }
 }

@@ -40,22 +40,50 @@ class Product {
         return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // VALIDAR DUPLICADOS — mismo nombre + talle + marca + color
+    // Si $excluir_id viene cargado (edición), no se compara contra sí mismo
+    public function existeDuplicado($nombre, $talle, $marca, $color, $excluir_id = null) {
+        $sql = "SELECT COUNT(*) FROM producto
+                WHERE nombre = :nombre
+                AND talle_id_talle = :talle
+                AND marca_id_marca = :marca
+                AND color_id_color = :color";
+
+        if ($excluir_id) {
+            $sql .= " AND id_producto != :excluir_id";
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':nombre', $nombre);
+        $stmt->bindValue(':talle', $talle);
+        $stmt->bindValue(':marca', $marca);
+        $stmt->bindValue(':color', $color);
+
+        if ($excluir_id) {
+            $stmt->bindValue(':excluir_id', $excluir_id);
+        }
+
+        $stmt->execute();
+        return $stmt->fetchColumn() > 0;
+    }
+
     // CREAR — retorna el id para crear inventario automáticamente
     public function crear($data) {
         $sql = "INSERT INTO producto
-                (nombre, tipodezapatillas, precio, talle_id_talle, marca_id_marca, color_id_color, categoria_id_categoria, activo)
+                (nombre, descripcion, tipodezapatillas, precio, talle_id_talle, marca_id_marca, color_id_color, categoria_id_categoria, activo)
                 VALUES
-                (:nombre, :tipo, :precio, :talle, :marca, :color, :categoria, 1)";
+                (:nombre, :descripcion, :tipo, :precio, :talle, :marca, :color, :categoria, 1)";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([
-            'nombre'    => $data['nombre'],
-            'tipo'      => $data['tipodezapatillas'],
-            'precio'    => $data['precio'],
-            'talle'     => $data['talle'],
-            'marca'     => $data['marca'],
-            'color'     => $data['color'],
-            'categoria' => $data['categoria']
+            'nombre'      => $data['nombre'],
+            'descripcion' => $data['descripcion'],
+            'tipo'        => $data['tipodezapatillas'],
+            'precio'      => $data['precio'],
+            'talle'       => $data['talle'],
+            'marca'       => $data['marca'],
+            'color'       => $data['color'],
+            'categoria'   => $data['categoria']
         ]);
 
         return $this->conn->lastInsertId();
@@ -73,6 +101,7 @@ class Product {
     public function actualizar($data) {
         $sql = "UPDATE producto SET
                     nombre                 = :nombre,
+                    descripcion            = :descripcion,
                     tipodezapatillas       = :tipo,
                     precio                 = :precio,
                     talle_id_talle         = :talle,
@@ -83,14 +112,15 @@ class Product {
 
         $stmt = $this->conn->prepare($sql);
         return $stmt->execute([
-            'id'        => $data['id'],
-            'nombre'    => $data['nombre'],
-            'tipo'      => $data['tipo'],
-            'precio'    => $data['precio'],
-            'talle'     => $data['talle'],
-            'marca'     => $data['marca'],
-            'color'     => $data['color'],
-            'categoria' => $data['categoria']
+            'id'          => $data['id'],
+            'nombre'      => $data['nombre'],
+            'descripcion' => $data['descripcion'],
+            'tipo'        => $data['tipo'],
+            'precio'      => $data['precio'],
+            'talle'       => $data['talle'],
+            'marca'       => $data['marca'],
+            'color'       => $data['color'],
+            'categoria'   => $data['categoria']
         ]);
     }
 
