@@ -197,10 +197,5 @@ class ProductController {
         exit();
     }
 
-    // HISTORIAL de auditoría del módulo productos
-    public function auditoria() {
-        Auth::verificarModulo('productos');
-        $movimientos = Auditoria::listar('producto');
-        require __DIR__ . '/views/auditoria.php';
-    }
+
 }

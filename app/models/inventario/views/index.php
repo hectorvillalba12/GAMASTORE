@@ -36,6 +36,21 @@
         </div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['eliminado'])): ?>
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-trash me-1"></i> Fila de inventario eliminada correctamente.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+
+    <?php if (isset($_GET['error']) && $_GET['error'] === 'tiene_movimientos'): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            No se puede eliminar: esta fila tiene movimientos de entrada/salida cargados en su historial.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+
     <?php if ($stockBajo > 0): ?>
         <div class="alert alert-danger d-flex align-items-center">
             <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
@@ -115,6 +130,11 @@
                                 <a href="index.php?action=inventario_historial&id=<?= $i['id_inventario'] ?>"
                                     class="btn btn-outline-secondary btn-sm" title="Ver historial">
                                     <i class="bi bi-clock-history"></i>
+                                </a>
+                                <a href="index.php?action=inventario_eliminar&id=<?= $i['id_inventario'] ?>"
+                                    class="btn btn-outline-danger btn-sm" title="Eliminar"
+                                    onclick="return confirm('¿Eliminar esta fila de inventario? Esta acción no se puede deshacer.');">
+                                    <i class="bi bi-trash"></i>
                                 </a>
                             </td>
                         </tr>

@@ -182,4 +182,25 @@ class InventarioController {
 
         require __DIR__ . '/views/historial.php';
     }
+    
+        // ELIMINAR físicamente una fila de inventario (solo si no tiene movimientos cargados)
+    public function delete() {
+        Auth::verificarModulo('inventario');
+        $id   = $_GET['id'];
+        $item = $this->inventario->obtener($id);
+
+        if (!$item) {
+            header("Location: index.php?action=inventario");
+            exit();
+        }
+
+        if ($this->inventario->tieneMovimientos($id)) {
+            header("Location: index.php?action=inventario&error=tiene_movimientos");
+            exit();
+        }
+
+        $this->inventario->eliminar($id);
+        header("Location: index.php?action=inventario&eliminado=1");
+        exit();
+    }
 }

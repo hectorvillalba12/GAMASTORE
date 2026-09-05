@@ -176,4 +176,18 @@ class Inventario {
         $sql = "SELECT * FROM producto WHERE activo = 1 ORDER BY nombre ASC";
         return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
+        // Chequea si la fila de inventario tiene movimientos cargados (entradas/salidas/ajustes)
+    public function tieneMovimientos($id_inventario) {
+        $sql  = "SELECT COUNT(*) FROM movimiento_inventario WHERE inventario_id_inventario = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute(['id' => $id_inventario]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    // ELIMINAR físicamente una fila de inventario (solo si no tiene movimientos, ver tieneMovimientos)
+    public function eliminar($id_inventario) {
+        $sql  = "DELETE FROM inventario WHERE id_inventario = :id";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute(['id' => $id_inventario]);
+    }
 }

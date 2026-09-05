@@ -161,7 +161,19 @@
             </div>
         </div>
         <?php endif; ?>
-
+                <!-- AUDITORÍA -->
+        <?php if (in_array('auditoria', $modulosUsuario)): ?>
+        <div class="col-md-4">
+            <div class="card shadow text-center h-100">
+                <div class="card-body p-4">
+                    <i class="bi bi-clock-history fs-1 text-dark mb-3"></i>
+                    <h4>Auditoría</h4>
+                    <p class="text-muted">Historial de cambios en el sistema</p>
+                    <a href="index.php?action=auditoria" class="btn btn-dark w-100">Ir a Auditoría</a>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 
 </div>

@@ -70,7 +70,7 @@ class venta {
     }
 
         public function crearDetalle($id_venta, $id_producto, $nombre_producto, $cantidad, $precio_unitario, $promocion = null) {
-        $iva      = 0.21;
+        $iva      = 0;
         $subtotal = $cantidad * $precio_unitario;
         $descuento = 0;
         $descripcion_extra = '';

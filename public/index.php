@@ -3,7 +3,7 @@ session_start();
 
 require_once '../config/database.php';
 require_once '../app/ayudantes/Auth.php';
-require_once '../app/ayudantes/Auditoria.php';
+require_once '../app/models/auditoria/AuditoriaController.php';
 require_once '../app/models/auth/AuthController.php';
 require_once '../app/models/producto/ProductController.php';
 require_once '../app/models/perfil/PerfilController.php';
@@ -25,7 +25,7 @@ $venta      = new VentaController();
 $usuarioCtrl = new UsuarioController();
 $promocion = new PromocionController();
 $reporte = new ReporteController();
-
+$auditoriaCtrl = new AuditoriaController();
 
 if (!isset($_GET['action'])) {
     if (isset($_SESSION['user'])) {
@@ -109,6 +109,10 @@ switch ($action) {
     case 'inventario_historial':
         (new InventarioController())->historial();
         break;
+            
+    case 'inventario_eliminar':
+        (new InventarioController())->delete();
+        break;
 
     // PRODUCTOS
     case 'productos':
@@ -134,10 +138,6 @@ switch ($action) {
         break;
     case 'excel':
         $product->exportExcel();
-        break;
-
-    case 'productos_auditoria':
-        $product->auditoria();
         break;
 
     // CLIENTES
@@ -260,6 +260,11 @@ switch ($action) {
         break;
     case 'reportes_excel':
         (new ReporteController())->exportExcel();
+        break;
+
+      // AUDITORÍA
+    case 'auditoria':
+        $auditoriaCtrl->index();
         break;
     default:
         echo "ERROR";

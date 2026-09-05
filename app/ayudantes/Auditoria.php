@@ -39,4 +39,12 @@ class Auditoria {
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    
+        // Devuelve las tablas que tienen registros de auditoría (para armar el filtro)
+    public static function listarTablas() {
+        $db  = (new Database())->connect();
+        $sql = "SELECT DISTINCT tabla FROM auditoria ORDER BY tabla ASC";
+        $stmt = $db->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
 }
