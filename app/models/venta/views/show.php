@@ -20,16 +20,37 @@
             <button onclick="window.print()" class="btn btn-dark btn-sm">
                 <i class="bi bi-printer"></i> Imprimir
             </button>
+            <?php if ($venta['estado'] !== 'cancelada'): ?>
+            <a href="index.php?action=ventas_cancelar&id=<?= $venta['id_venta'] ?>"
+            class="btn btn-danger btn-sm"
+            onclick="return confirm('¿Seguro que querés cancelar esta venta? Se devolverá el stock de los productos.');">
+                <i class="bi bi-x-circle"></i> Cancelar Venta
+            </a>
+            <?php endif; ?>
         </div>
     </div>
 
     <?php if (isset($_GET['ok'])): ?>
         <div class="alert alert-success no-print">✅ Venta registrada con éxito.</div>
     <?php endif; ?>
+    <?php if (isset($_GET['cancelada'])): ?>
+        <div class="alert alert-warning no-print">⚠️ La venta fue cancelada y el stock fue restaurado.</div>
+    <?php endif; ?>
+    <?php if (($_GET['error'] ?? '') === 'ya_cancelada'): ?>
+        <div class="alert alert-danger no-print">Esta venta ya se encuentra cancelada.</div>
+    <?php endif; ?>
+    <?php if (($_GET['error'] ?? '') === 'error_al_cancelar'): ?>
+        <div class="alert alert-danger no-print">Ocurrió un error al cancelar la venta. Intentá de nuevo.</div>
+    <?php endif; ?>
 
     <div class="card shadow-sm">
-        <div class="card-header bg-dark text-white">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
             <strong>GamaStore — Comprobante de Venta</strong>
+            <?php if ($venta['estado'] === 'cancelada'): ?>
+                <span class="badge bg-danger">CANCELADA</span>
+            <?php else: ?>
+                <span class="badge bg-success">COMPLETADA</span>
+            <?php endif; ?>
         </div>
         <div class="card-body">
 
@@ -52,8 +73,8 @@
                     <th class="text-end">Precio Unit.</th>
                     <th class="text-end">Descuento</th>
                     <th class="text-end">Subtotal</th>
-                    <th class="text-end">IVA (21%)</th>
-                    <th class="text-end">Total c/IVA</th>
+                    <th class="text-end">IVA</th>
+                    <th class="text-end">Total</th>
                 </tr>
                 </thead>
                 <tbody>

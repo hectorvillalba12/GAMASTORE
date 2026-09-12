@@ -179,6 +179,10 @@ switch ($action) {
     case 'ventas_ver':
         $venta->show();
         break;
+
+    case 'ventas_cancelar':
+        $venta->cancelar();
+        break;
     //PERFILES
     case 'perfiles':
         $perfil->index();

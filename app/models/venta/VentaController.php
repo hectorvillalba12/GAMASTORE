@@ -123,4 +123,37 @@ class VentaController {
         $detalle = $this->venta->obtenerDetalle($id);
         require __DIR__ . '/views/show.php';
     }
+    
+    public function cancelar() {
+        Auth::verificarModulo('ventas');
+        $id    = $_GET['id'];
+        $venta = $this->venta->obtener($id);
+
+        if (!$venta) {
+            header("Location: index.php?action=ventas");
+            exit();
+        }
+
+        if ($venta['estado'] === 'cancelada') {
+            header("Location: index.php?action=ventas_ver&id={$id}&error=ya_cancelada");
+            exit();
+        }
+
+        $this->db->beginTransaction();
+
+        try {
+            $this->venta->restaurarStockPorVenta($id, $this->usuarioActualId());
+            $this->venta->cancelar($id);
+            $this->db->commit();
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            header("Location: index.php?action=ventas_ver&id={$id}&error=error_al_cancelar");
+            exit();
+        }
+
+        header("Location: index.php?action=ventas_ver&id={$id}&cancelada=1");
+        exit();
+    }
+
+
 }

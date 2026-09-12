@@ -40,13 +40,14 @@
                             <th>Cliente</th>
                             <th class="text-end">Total</th>
                             <th>Método de Pago</th>
+                            <th class="text-center">Estado</th>
                             <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php if (empty($ventas)): ?>
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">No hay ventas registradas.</td>
+                            <td colspan="7" class="text-center text-muted py-4">No hay ventas registradas.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($ventas as $v): ?>
@@ -57,10 +58,24 @@
                             <td class="text-end fw-bold">$<?= number_format($v['total'], 2) ?></td>
                             <td><?= htmlspecialchars($v['metodo_de_pago']) ?></td>
                             <td class="text-center">
+                                <?php if ($v['estado'] === 'cancelada'): ?>
+                                    <span class="badge bg-danger">Cancelada</span>
+                                <?php else: ?>
+                                    <span class="badge bg-success">Completada</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-center">
                                 <a href="index.php?action=ventas_ver&id=<?= $v['id_venta'] ?>"
                                 class="btn btn-info btn-sm text-white" title="Ver detalle">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                <?php if ($v['estado'] !== 'cancelada'): ?>
+                                <a href="index.php?action=ventas_cancelar&id=<?= $v['id_venta'] ?>"
+                                class="btn btn-danger btn-sm" title="Cancelar venta"
+                                onclick="return confirm('¿Seguro que querés cancelar esta venta? Se devolverá el stock de los productos.');">
+                                    <i class="bi bi-x-circle"></i>
+                                </a>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

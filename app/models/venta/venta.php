@@ -152,6 +152,52 @@ class venta {
 
         return true;
     }
+    
+    // Restaura el stock de todos los productos de una venta (usado al cancelarla)
+    public function restaurarStockPorVenta($id_venta, $usuario_id = null) {
+        $detalle = $this->obtenerDetalle($id_venta);
+
+        foreach ($detalle as $d) {
+            $sql = "SELECT id_inventario, stock_actual FROM inventario
+                    WHERE producto_id_producto = :id_producto";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute(['id_producto' => $d['productos_idproducto']]);
+            $inv = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$inv) continue; // si el producto ya no tiene registro de inventario, se omite
+
+            $stock_anterior = (int)$inv['stock_actual'];
+            $stock_nuevo    = $stock_anterior + (int)$d['cantidad'];
+
+            $sqlUpdate = "UPDATE inventario SET stock_actual = :stock_nuevo WHERE id_inventario = :id_inventario";
+            $stmtUpdate = $this->conn->prepare($sqlUpdate);
+            $stmtUpdate->execute(['stock_nuevo' => $stock_nuevo, 'id_inventario' => $inv['id_inventario']]);
+
+        // Mismo historial que usa el módulo de Inventario, ahora como 'entrada'
+            $sqlMov = "INSERT INTO movimiento_inventario
+                            (inventario_id_inventario, tipo, cantidad, stock_anterior, stock_nuevo, motivo, usuario_id_usuario, fecha)
+                        VALUES
+                            (:inventario_id, 'entrada', :cantidad, :stock_anterior, :stock_nuevo, :motivo, :usuario_id, NOW())";
+            $stmtMov = $this->conn->prepare($sqlMov);
+            $stmtMov->execute([
+                'inventario_id'  => $inv['id_inventario'],
+                'cantidad'       => $d['cantidad'],
+                'stock_anterior' => $stock_anterior,
+                'stock_nuevo'    => $stock_nuevo,
+                'motivo'         => "Cancelación venta #{$id_venta}",
+                'usuario_id'     => $usuario_id
+            ]);
+        }
+    }
+
+// Marca una venta como cancelada
+    public function cancelar($id_venta) {
+        $sql = "UPDATE venta SET estado = 'cancelada' WHERE id_venta = :id";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute(['id' => $id_venta]);
+    }
+    
+
 
     // OBTENER detalle de una venta
     public function obtenerDetalle($id_venta) {

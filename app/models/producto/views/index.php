@@ -17,9 +17,6 @@
             <a href="index.php?action=dashboard" class="btn btn-outline-secondary btn-sm me-2">
                 <i class="bi bi-arrow-left"></i> Volver
             </a>
-            <a href="index.php?action=auditoria&tabla=producto" class="btn btn-outline-dark btn-sm me-2">
-                <i class="bi bi-clock-history"></i> Auditoría
-            </a>
             <a href="index.php?action=crear" class="btn btn-success">
                 <i class="bi bi-plus-lg"></i> Nuevo Producto
             </a>
