@@ -40,6 +40,12 @@
             <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-printer"></i> Imprimir / PDF
             </button>
+            <button onclick="exportarGraficosPDF('graficos_clientes')" type="button" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-file-earmark-pdf"></i> Gráficos a PDF
+            </button>
+            <button onclick="exportarGraficosExcel('clientes', 'graficos_clientes')" type="button" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-file-earmark-excel"></i> Gráficos a Excel
+            </button>
         </div>
     </form>
 
@@ -49,6 +55,15 @@
             <div class="fs-3 fw-bold text-primary"><?= (int)$nuevos ?></div>
         </div>
     </div>
+
+    <?php if (!empty($clientes)): ?>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white">Top clientes por cantidad de compras</div>
+        <div class="card-body">
+            <canvas id="graficoClientes" height="280"></canvas>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
@@ -82,5 +97,31 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/graficos-export.js"></script>
+<script>
+const datosClientes = <?= json_encode($clientes) ?>;
+
+if (datosClientes.length > 0) {
+    new Chart(document.getElementById('graficoClientes'), {
+        type: 'bar',
+        data: {
+            labels: datosClientes.map(c => c.nombre_cliente),
+            datasets: [{
+                label: 'Compras',
+                data: datosClientes.map(c => parseInt(c.cantidad_compras)),
+                backgroundColor: '#0d6efd'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true } }
+        }
+    });
+}
+</script>
 </body>
 </html>

@@ -26,11 +26,26 @@
         <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-printer"></i> Imprimir / PDF
         </button>
+        <button onclick="exportarGraficosPDF('graficos_stock')" type="button" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-file-earmark-pdf"></i> Gráficos a PDF
+        </button>
+        <button onclick="exportarGraficosExcel('stock', 'graficos_stock')" type="button" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel"></i> Gráficos a Excel
+        </button>
     </div>
 
     <p class="text-muted no-print">
         Este reporte es una foto del momento actual (no depende de un rango de fechas).
     </p>
+
+    <?php if (!empty($productos)): ?>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-danger text-white">Stock actual vs. mínimo</div>
+        <div class="card-body">
+            <canvas id="graficoStock" height="280"></canvas>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
@@ -66,5 +81,36 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/graficos-export.js"></script>
+<script>
+const datosStock = <?= json_encode($productos) ?>;
+
+if (datosStock.length > 0) {
+    new Chart(document.getElementById('graficoStock'), {
+        type: 'bar',
+        data: {
+            labels: datosStock.map(p => p.nombre),
+            datasets: [
+                {
+                    label: 'Stock actual',
+                    data: datosStock.map(p => parseInt(p.stock_actual)),
+                    backgroundColor: '#dc3545'
+                },
+                {
+                    label: 'Stock mínimo',
+                    data: datosStock.map(p => parseInt(p.stock_minimo)),
+                    backgroundColor: '#adb5bd'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+</script>
 </body>
 </html>

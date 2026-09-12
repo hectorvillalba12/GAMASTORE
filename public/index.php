@@ -265,6 +265,9 @@ switch ($action) {
     case 'reportes_excel':
         (new ReporteController())->exportExcel();
         break;
+    case 'reportes_graficos_excel':
+        (new ReporteController())->exportGraficosExcel();
+        break;
 
       // AUDITORÍA
     case 'auditoria':

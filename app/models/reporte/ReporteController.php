@@ -19,6 +19,16 @@ class ReporteController {
 
     public function index() {
         Auth::verificarModulo('reportes');
+        [$desde, $hasta] = $this->obtenerRango();
+
+        $totales      = $this->reporte->totalesVentas($desde, $hasta);
+        $ventas       = $this->reporte->ventasPorPeriodo($desde, $hasta, 'dia');
+        $porCategoria = $this->reporte->ventasPorCategoria($desde, $hasta);
+        $productos    = $this->reporte->productosMasVendidos($desde, $hasta, 10);
+        $stock        = $this->reporte->stockBajo();
+        $clientes     = $this->reporte->clientesFrecuentes($desde, $hasta, 10);
+        $promociones  = $this->reporte->promocionesAplicadas($desde, $hasta);
+
         require __DIR__ . '/views/index.php';
     }
 
@@ -106,6 +116,64 @@ class ReporteController {
                     echo "{$v['periodo']}\t{$v['cantidad_ventas']}\t{$v['total']}\n";
                 }
         }
+        exit();
+    }
+
+    // Recibe las imágenes de los gráficos (capturadas en el navegador) y arma un Excel real con PhpSpreadsheet
+    public function exportGraficosExcel() {
+        Auth::verificarModulo('reportes');
+
+        $tipo = $_POST['tipo'] ?? 'reporte';
+        $graficos = json_decode($_POST['graficos'] ?? '[]', true);
+
+        if (empty($graficos)) {
+            die('No se recibieron gráficos para exportar.');
+        }
+
+        require_once __DIR__ . '/../../../vendor/autoload.php';
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet->removeSheetByIndex(0);
+
+        $tmpFiles = [];
+
+        foreach ($graficos as $i => $g) {
+            $nombreHoja = preg_replace('/[^A-Za-z0-9 ]/', '', $g['titulo']);
+            $nombreHoja = mb_substr($nombreHoja, 0, 28) ?: ('Grafico' . ($i + 1));
+
+            $sheet = $spreadsheet->createSheet();
+            $sheet->setTitle($nombreHoja);
+
+            $sheet->setCellValue('A1', $g['titulo']);
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+
+            $partesImagen = explode(',', $g['imagen']);
+            if (count($partesImagen) < 2) continue;
+
+            $binario = base64_decode($partesImagen[1]);
+            $tmpPath = sys_get_temp_dir() . '/grafico_' . uniqid() . '.png';
+            file_put_contents($tmpPath, $binario);
+            $tmpFiles[] = $tmpPath;
+
+            $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+            $drawing->setName($g['titulo']);
+            $drawing->setPath($tmpPath);
+            $drawing->setCoordinates('A3');
+            $drawing->setHeight(350);
+            $drawing->setWorksheet($sheet);
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=graficos_{$tipo}.xlsx");
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+
+        foreach ($tmpFiles as $f) {
+            @unlink($f);
+        }
+
         exit();
     }
 }

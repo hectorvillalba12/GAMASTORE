@@ -48,6 +48,12 @@
             <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-printer"></i> Imprimir / PDF
             </button>
+            <button onclick="exportarGraficosPDF('graficos_ventas')" type="button" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-file-earmark-pdf"></i> Gráficos a PDF
+            </button>
+            <button onclick="exportarGraficosExcel('ventas', 'graficos_ventas')" type="button" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-file-earmark-excel"></i> Gráficos a Excel
+            </button>
         </div>
     </form>
 
@@ -65,6 +71,25 @@
                 <div class="card-body">
                     <div class="text-muted small">Total facturado</div>
                     <div class="fs-3 fw-bold text-success">$<?= number_format($totales['total_facturado'], 2) ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-dark text-white">Evolución de ventas</div>
+                <div class="card-body">
+                    <canvas id="graficoVentas" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-dark text-white">Ventas por categoría</div>
+                <div class="card-body">
+                    <canvas id="graficoCategorias" height="220"></canvas>
                 </div>
             </div>
         </div>
@@ -127,5 +152,48 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/graficos-export.js"></script>
+<script>
+const datosVentas = <?= json_encode($ventas) ?>;
+const datosCategorias = <?= json_encode($porCategoria) ?>;
+
+if (datosVentas.length > 0) {
+    new Chart(document.getElementById('graficoVentas'), {
+        type: 'line',
+        data: {
+            labels: datosVentas.map(v => v.periodo),
+            datasets: [{
+                label: 'Total facturado ($)',
+                data: datosVentas.map(v => parseFloat(v.total)),
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25,135,84,0.15)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+
+if (datosCategorias.length > 0) {
+    new Chart(document.getElementById('graficoCategorias'), {
+        type: 'doughnut',
+        data: {
+            labels: datosCategorias.map(c => c.categoria ?? 'Sin categoría'),
+            datasets: [{
+                data: datosCategorias.map(c => parseFloat(c.total_facturado)),
+                backgroundColor: ['#198754','#ffc107','#0d6efd','#dc3545','#6f42c1','#20c997','#fd7e14']
+            }]
+        },
+        options: { responsive: true }
+    });
+}
+</script>
 </body>
 </html>

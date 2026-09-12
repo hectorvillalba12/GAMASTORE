@@ -40,8 +40,23 @@
             <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-printer"></i> Imprimir / PDF
             </button>
+            <button onclick="exportarGraficosPDF('graficos_promociones')" type="button" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-file-earmark-pdf"></i> Gráficos a PDF
+            </button>
+            <button onclick="exportarGraficosExcel('promociones', 'graficos_promociones')" type="button" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-file-earmark-excel"></i> Gráficos a Excel
+            </button>
         </div>
     </form>
+
+    <?php if (!empty($promociones)): ?>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">Descuento otorgado por promoción</div>
+        <div class="card-body">
+            <canvas id="graficoPromociones" height="280"></canvas>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
@@ -73,5 +88,25 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/graficos-export.js"></script>
+<script>
+const datosPromos = <?= json_encode($promociones) ?>;
+
+if (datosPromos.length > 0) {
+    new Chart(document.getElementById('graficoPromociones'), {
+        type: 'doughnut',
+        data: {
+            labels: datosPromos.map(p => p.nombre),
+            datasets: [{
+                data: datosPromos.map(p => parseFloat(p.descuento_total)),
+                backgroundColor: ['#0dcaf0','#198754','#ffc107','#dc3545','#6f42c1','#fd7e14']
+            }]
+        },
+        options: { responsive: true }
+    });
+}
+</script>
 </body>
 </html>
