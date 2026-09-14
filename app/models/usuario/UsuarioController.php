@@ -49,6 +49,7 @@ class UsuarioController {
         $id        = $_POST['id_usuario'];
         $rol       = trim($_POST['rol']  ?? '');
         $perfil_id = $_POST['perfil_id'] ?? null;
+        $perfil_id = ($perfil_id === '') ? null : $perfil_id;
 
         $usuario = $this->usuario->obtener($id);
 
