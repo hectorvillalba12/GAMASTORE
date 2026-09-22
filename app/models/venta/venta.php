@@ -83,6 +83,7 @@ class venta {
         $subtotal_con_descuento = $subtotal - $descuento;
         $monto_iva    = round($subtotal_con_descuento * $iva, 2);
         $precio_final = round($subtotal_con_descuento + $monto_iva, 2);
+        $descripcion = mb_substr("{$nombre_producto} x{$cantidad}{$descripcion_extra}", 0, 250);
 
         $sql = "INSERT INTO detalle_venta
                     (IVA, descripcion, cantidad, precio_producto, descuento, total_venta, precio_final,
@@ -93,7 +94,7 @@ class venta {
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([
             'iva'                  => $iva,
-            'descripcion'          => "{$nombre_producto} x{$cantidad}{$descripcion_extra}",
+            'descripcion'          => $descripcion,
             'cantidad'             => $cantidad,
             'precio_producto'      => $precio_unitario,
             'descuento'            => $descuento,

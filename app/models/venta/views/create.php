@@ -95,6 +95,7 @@
                                     <th class="text-center" style="width:80px">Stock</th>
                                     <th class="text-center" style="width:90px">Cant.</th>
                                     <th class="text-end" style="width:110px">P. Unit.</th>
+                                    <th class="text-center" style="width:150px">Promoción</th>
                                     <th class="text-end" style="width:110px">Subtotal</th>
                                     <th style="width:50px"></th>
                                 </tr>
@@ -149,6 +150,15 @@ function agregarFila() {
                 required oninput="calcularFila('${idx}')">
         </td>
         <td class="text-end align-middle" id="precio_label_${idx}">$0.00</td>
+        <td class="text-center align-middle" id="promo_celda_${idx}">
+            <input type="hidden" name="aplicar_promo[]" id="aplica_promo_${idx}" value="1">
+            <div class="form-check form-switch d-flex justify-content-center" id="promo_toggle_${idx}" style="display:none;">
+                <input class="form-check-input" type="checkbox" role="switch" id="chk_promo_${idx}" checked
+                    title="Aplicar promoción a esta línea"
+                    onchange="document.getElementById('aplica_promo_${idx}').value = this.checked ? '1' : '0'; calcularFila('${idx}')">
+            </div>
+            <div class="small text-muted" id="promo_label_${idx}"></div>
+        </td>
         <td class="text-end align-middle fw-bold" id="subtotal_${idx}">$0.00</td>
         <td class="text-center align-middle">
             <button type="button" class="btn btn-danger btn-sm"
@@ -164,12 +174,36 @@ function alSeleccionar(sel, idx) {
     const opt    = sel.options[sel.selectedIndex];
     const precio = parseFloat(opt.dataset.precio || 0);
     const stock  = parseInt(opt.dataset.stock || 0);
+    const idProducto = opt.value;
 
     document.getElementById(`precio_${idx}`).value              = precio;
-    document.getElementById(`nombre_${idx}`).value               = opt.textContent.trim(); // <-- nueva línea
+    const productoObj = productosData.find(p => p.id_producto == idProducto);
+    document.getElementById(`nombre_${idx}`).value               = productoObj ? productoObj.nombre : opt.textContent.trim();
     document.getElementById(`stock_${idx}`).textContent         = stock;
     document.getElementById(`precio_label_${idx}`).textContent  = '$' + precio.toFixed(2);
     document.getElementById(`cant_${idx}`).max                  = stock;
+
+    // Muestra u oculta el switch de "aplicar promoción" según si el producto elegido tiene una vigente
+    const promo         = promosPorProducto[idProducto];
+    const toggleDiv      = document.getElementById(`promo_toggle_${idx}`);
+    const labelDiv       = document.getElementById(`promo_label_${idx}`);
+    const chk            = document.getElementById(`chk_promo_${idx}`);
+    const hiddenAplica   = document.getElementById(`aplica_promo_${idx}`);
+
+    if (promo) {
+        const texto = promo.tipo_descuento === 'porcentaje'
+            ? `-${promo.descuento_porcentaje}%`
+            : `-$${parseFloat(promo.monto_fijo).toFixed(2)}`;
+        toggleDiv.style.display = 'flex';
+        labelDiv.textContent    = `${promo.nombre} (${texto})`;
+        chk.checked             = true;   // por defecto viene activada
+        hiddenAplica.value      = '1';
+    } else {
+        toggleDiv.style.display = 'none';
+        labelDiv.textContent    = '';
+        hiddenAplica.value      = '1';    // no afecta: no hay promo para este producto
+    }
+
     calcularFila(idx);
 }
 
@@ -177,7 +211,23 @@ function calcularFila(idx) {
     const cant    = parseFloat(document.getElementById(`cant_${idx}`)?.value || 0);
     const precio  = parseFloat(document.getElementById(`precio_${idx}`)?.value || 0);
     const el = document.getElementById(`subtotal_${idx}`);
-    if (el) el.textContent = '$' + (cant * precio).toFixed(2);
+    if (!el) { calcularTotal(); return; }
+
+    let subtotal = cant * precio;
+
+    const selEl   = document.querySelector(`tr[data-idx="${idx}"] select[name="producto_id[]"]`);
+    const idProducto = selEl ? selEl.value : null;
+    const promo   = idProducto ? promosPorProducto[idProducto] : null;
+    const aplica  = document.getElementById(`aplica_promo_${idx}`)?.value === '1';
+
+    if (promo && aplica) {
+        const descuento = promo.tipo_descuento === 'porcentaje'
+            ? subtotal * (parseFloat(promo.descuento_porcentaje) / 100)
+            : Math.min(parseFloat(promo.monto_fijo), subtotal);
+        subtotal = subtotal - descuento;
+    }
+
+    el.textContent = '$' + subtotal.toFixed(2);
     calcularTotal();
 }
 

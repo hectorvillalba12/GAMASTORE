@@ -49,6 +49,7 @@ class VentaController {
         $cantidades        = $_POST['cantidad'] ?? [];
         $precios_unitarios = $_POST['precio_unitario'] ?? [];
         $cliente_id        = $_POST['cliente_idcliente'] ?: null;
+        $aplicar_promo     = $_POST['aplicar_promo'] ?? []; // '1' o '0' por cada línea, alineado por índice
 
         if (empty($productos_ids)) {
             header("Location: index.php?action=ventas_crear&error=sin_productos");
@@ -83,16 +84,18 @@ class VentaController {
                 $nombre_producto = $_POST['nombre_producto'][$i] ?? "Producto #{$pid}";
 
                 // Se busca si el producto tiene una promoción vigente, respetando la
-                // restricción por cliente si la promoción la tiene.
-                $promo = $this->promocion->obtenerPromocionVigenteParaProducto($pid, $cliente_id);
+                // restricción por cliente si la promoción la tiene, y solo si el vendedor
+                // no la desactivó manualmente para esta línea (checkbox "Aplicar promoción").
+                $quierePromo = ($aplicar_promo[$i] ?? '1') !== '0';
+                $promo = $quierePromo ? $this->promocion->obtenerPromocionVigenteParaProducto($pid, $cliente_id) : null;
                 $promoParaDetalle = null;
 
                 if ($promo) {
                     $subtotal = $cantidad * $precio_unitario;
                     $promoParaDetalle = [
-                        'id_promocion'     => $promo['id_promocion'],
-                        'nombre'           => $promo['nombre'],
-                        'monto_descuento'  => $this->promocion->calcularDescuento($subtotal, $promo)
+                    'id_promocion'     => $promo['id_promocion'],
+                    'nombre'           => $promo['nombre'],
+                    'monto_descuento'  => $this->promocion->calcularDescuento($subtotal, $promo)
                     ];
                 }
 

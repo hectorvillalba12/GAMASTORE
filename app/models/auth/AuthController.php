@@ -82,14 +82,14 @@ class AuthController {
 
             try {
                 $mail->isSMTP();
-                $mail->Host       = 'smtp.gmail.com';
+                $mail->Host       = Env::get('MAIL_HOST', 'smtp.gmail.com');
                 $mail->SMTPAuth   = true;
-                $mail->Username   = 'villalbahector257@gmail.com';
-                $mail->Password   = 'asnh pmmf wfst igbj';
-                $mail->SMTPSecure = 'tls';
-                $mail->Port       = 587;
+                $mail->Username   = Env::get('MAIL_USERNAME');
+                $mail->Password   = Env::get('MAIL_PASSWORD');
+                $mail->SMTPSecure = Env::get('MAIL_ENCRYPTION', 'tls');
+                $mail->Port       = (int) Env::get('MAIL_PORT', 587);
 
-                $mail->setFrom('villalbahector257@gmail.com', 'GAMASTORE');
+                $mail->setFrom(Env::get('MAIL_USERNAME'), Env::get('MAIL_FROM_NAME', 'GAMASTORE'));
                 $mail->addAddress($email);
 
                 $mail->isHTML(true);
@@ -102,14 +102,17 @@ class AuthController {
                 ";
 
                 $mail->send();
-                echo "Correo enviado correctamente";
+                header("Location: index.php?action=forgot&msg=enviado");
+                exit();
 
             } catch (Exception $e) {
-                echo "Error al enviar correo: {$mail->ErrorInfo}";
+                header("Location: index.php?action=forgot&msg=error");
+                exit();
             }
 
         } else {
-            echo "Email no encontrado";
+            header("Location: index.php?action=forgot&msg=no_encontrado");
+            exit();
         }
     }
 

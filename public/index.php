@@ -1,5 +1,45 @@
 <?php
+
 session_start();
+
+ob_start(function ($html) {
+
+    // 1) No tocar descargas (Excel, etc.)
+    foreach (headers_list() as $cabecera) {
+        if (stripos($cabecera, 'Content-Disposition') === 0) {
+            return $html;
+        }
+    }
+
+    // 2) Solo tocar páginas HTML completas (las que tienen </body>)
+    $pos = strripos($html, '</body>');
+    if ($pos === false) {
+        return $html;
+    }
+
+    // 3) Armar lo que se va a inyectar
+    $inyeccion = '';
+
+    if (isset($_SESSION['usuario'])) {
+        $u = $_SESSION['usuario'];
+        $datos = [
+            'id'     => $u['id_usuario']    ?? null,
+            'email'  => $u['email']         ?? '',
+            'rol'    => $u['rol']           ?? '',
+            'perfil' => $u['perfil_nombre'] ?? '',
+        ];
+        $json = json_encode($datos, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+        $inyeccion .= "<script>window.GAMASTORE_USUARIO = $json;</script>\n";
+    }
+
+    $inyeccion .= '<script src="js/sesion.js"></script>' . "\n";
+
+    // Insertar justo antes de </body>
+    return substr($html, 0, $pos) . $inyeccion . substr($html, $pos);
+});
+
+require_once '../app/ayudantes/Env.php';
+Env::load(__DIR__ . '/../.env');
 
 require_once '../config/database.php';
 require_once '../app/ayudantes/Auth.php';
@@ -28,7 +68,7 @@ $reporte = new ReporteController();
 $auditoriaCtrl = new AuditoriaController();
 
 if (!isset($_GET['action'])) {
-    if (isset($_SESSION['user'])) {
+    if (isset($_SESSION['usuario'])) {
         header("Location: index.php?action=dashboard");
     } else {
         header("Location: index.php?action=login");

@@ -112,19 +112,6 @@
                         </div>
 
                         <hr class="my-4">
-                        <h5><i class="bi bi-people"></i> Clientes (opcional)</h5>
-                        <p class="text-muted small">
-                            Si no seleccionás ningún cliente, la promoción aplica a cualquiera.
-                            Si seleccionás uno o más, solo esos clientes reciben el descuento.
-                        </p>
-                        <select name="clientes[]" class="form-select" multiple size="5">
-                            <?php foreach ($clientes as $c): ?>
-                                <option value="<?= $c['id_cliente'] ?>">
-                                    <?= htmlspecialchars($c['nombre_completo']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-
                         <div class="mt-4 d-flex justify-content-between">
                             <a href="index.php?action=promociones" class="btn btn-outline-secondary">Cancelar</a>
                             <button type="submit" class="btn btn-success">

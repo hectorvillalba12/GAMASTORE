@@ -117,16 +117,6 @@
                         </div>
 
                         <hr class="my-4">
-                        <h5><i class="bi bi-people"></i> Clientes (opcional)</h5>
-                        <select name="clientes[]" class="form-select" multiple size="5">
-                            <?php foreach ($clientes as $c): ?>
-                                <option value="<?= $c['id_cliente'] ?>"
-                                    <?= in_array($c['id_cliente'], $clientesAsignados) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($c['nombre_completo']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-
                         <div class="mt-4 d-flex justify-content-between">
                             <a href="index.php?action=promociones" class="btn btn-outline-secondary">Cancelar</a>
                             <button type="submit" class="btn btn-warning text-white">
