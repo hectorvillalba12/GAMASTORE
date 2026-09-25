@@ -10,7 +10,7 @@ class Env {
         }
 
         if (!file_exists($rutaEnv)) {
-            // No rompemos la app si falta el .env, pero avisamos en el log del servidor.
+            
             error_log("[Env] Archivo .env no encontrado en: $rutaEnv");
             self::$loaded = true;
             return;

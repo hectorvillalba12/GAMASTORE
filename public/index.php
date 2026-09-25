@@ -54,6 +54,7 @@ require_once "../app/models/inventario/InventarioController.php";
 require_once "../app/models/venta/VentaController.php";
 require_once "../app/models/promocion/PromocionController.php";
 require_once "../app/models/reporte/ReporteController.php";
+require_once '../app/models/configuracion/ConfiguracionController.php';
 
 $auth       = new AuthController();
 $product    = new ProductController();
@@ -66,6 +67,7 @@ $usuarioCtrl = new UsuarioController();
 $promocion = new PromocionController();
 $reporte = new ReporteController();
 $auditoriaCtrl = new AuditoriaController();
+$configuracion = new ConfiguracionController();
 
 if (!isset($_GET['action'])) {
     if (isset($_SESSION['usuario'])) {
@@ -178,6 +180,16 @@ switch ($action) {
         break;
     case 'excel':
         $product->exportExcel();
+        break;
+    // CONFIGURACIONES
+    case 'configuraciones':
+        $configuracion->index();
+        break;
+    case 'guardar_marca':
+        $configuracion->storeMarca();
+        break;
+    case 'guardar_categoria':
+        $configuracion->storeCategoria();
         break;
 
     // CLIENTES

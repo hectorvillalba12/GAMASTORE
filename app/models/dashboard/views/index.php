@@ -174,6 +174,19 @@
             </div>
         </div>
         <?php endif; ?>
+                <!-- CONFIGURACIONES -->
+        <?php if (in_array('configuraciones', $modulosUsuario)): ?>
+        <div class="col-md-4">
+            <div class="card shadow text-center h-100">
+                <div class="card-body p-4">
+                    <i class="bi bi-gear-fill fs-1 text-muted mb-3"></i>
+                    <h4>Configuraciones</h4>
+                    <p class="text-muted">Gestionar marcas y categorías</p>
+                    <a href="index.php?action=configuraciones" class="btn btn-secondary w-100">Ir a Configuraciones</a>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 
 </div>
