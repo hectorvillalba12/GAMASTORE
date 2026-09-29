@@ -76,20 +76,20 @@ class AuthController {
 
             $link = "http://localhost/gamastorefinal/public/index.php?action=resetForm&token=$token";
 
-            require __DIR__ . '/../../../vendor/autoload.php';
+            
 
             $mail = new PHPMailer(true);
 
             try {
                 $mail->isSMTP();
-                $mail->Host       = Env::get('MAIL_HOST', 'smtp.gmail.com');
+                $mail->Host       = $_ENV['MAIL_HOST'] ?? 'smtp.gmail.com';
                 $mail->SMTPAuth   = true;
-                $mail->Username   = Env::get('MAIL_USERNAME');
-                $mail->Password   = Env::get('MAIL_PASSWORD');
-                $mail->SMTPSecure = Env::get('MAIL_ENCRYPTION', 'tls');
-                $mail->Port       = (int) Env::get('MAIL_PORT', 587);
+                $mail->Username   = $_ENV['MAIL_USERNAME'] ?? '';
+                $mail->Password   = $_ENV['MAIL_PASSWORD'] ?? '';
+                $mail->SMTPSecure = $_ENV['MAIL_ENCRYPTION'] ?? 'tls';
+                $mail->Port       = (int) ($_ENV['MAIL_PORT'] ?? 587);
 
-                $mail->setFrom(Env::get('MAIL_USERNAME'), Env::get('MAIL_FROM_NAME', 'GAMASTORE'));
+                $mail->setFrom($_ENV['MAIL_USERNAME'] ?? '', $_ENV['MAIL_FROM_NAME'] ?? 'GAMASTORE');
                 $mail->addAddress($email);
 
                 $mail->isHTML(true);

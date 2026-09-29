@@ -38,8 +38,12 @@ ob_start(function ($html) {
     return substr($html, 0, $pos) . $inyeccion . substr($html, $pos);
 });
 
-require_once '../app/ayudantes/Env.php';
-Env::load(__DIR__ . '/../.env');
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
+
+
 
 require_once '../config/database.php';
 require_once '../app/ayudantes/Auth.php';
