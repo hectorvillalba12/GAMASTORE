@@ -11,17 +11,95 @@ class venta {
         return $this->conn;
     }
 
-    // LISTAR todas las ventas con cliente
-    public function listar() {
+    // Arma la condición del filtro por cliente (nombre y/o apellido).
+    // Devuelve el SQL para concatenar después de "WHERE 1=1" y completa $params por referencia.
+    private function condicionFiltros($filtros, &$params) {
+        $sql = '';
+
+        $terminosCliente = preg_split('/\s+/', trim($filtros['cliente'] ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($terminosCliente as $i => $t) {
+            // Escapa los comodines de LIKE para que % y _ se busquen como texto normal
+            $t = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $t);
+            $sql .= " AND CONCAT_WS(' ', p.nombre, p.apellido) LIKE :cli$i";
+            $params["cli$i"] = '%' . $t . '%';
+        }
+
+        return $sql;
+    }
+
+    // LISTAR ventas con filtros opcionales (cliente, producto, método de pago) y paginación
+    public function listar($filtros = [], $limite = 10, $offset = 0) {
+        $params = [];
+
+        $sql = "SELECT v.*,
+                    CONCAT(p.nombre, ' ', p.apellido) AS nombre_cliente,
+                    (SELECT GROUP_CONCAT(DISTINCT pr.nombre ORDER BY pr.nombre SEPARATOR ', ')
+                        FROM detalle_venta dv
+                        JOIN producto pr ON dv.productos_idproducto = pr.id_producto
+                        WHERE dv.venta_idventa = v.id_venta) AS productos
+                FROM venta v
+                LEFT JOIN cliente c ON v.cliente_idcliente = c.id_cliente
+                LEFT JOIN persona p ON c.persona_idpersona = p.id_persona
+                WHERE 1=1";
+        $sql .= $this->condicionFiltros($filtros, $params);
+        $sql .= " ORDER BY v.fecha DESC
+                LIMIT :limite OFFSET :offset";
+
+        $stmt = $this->conn->prepare($sql);
+        foreach ($params as $clave => $valor) {
+            $stmt->bindValue(":$clave", $valor);
+        }
+        $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // CONTAR el total de ventas que cumplen los filtros (para calcular las páginas)
+    public function contar($filtros = []) {
+        $params = [];
+
+        $sql = "SELECT COUNT(*)
+                FROM venta v
+                LEFT JOIN cliente c ON v.cliente_idcliente = c.id_cliente
+                LEFT JOIN persona p ON c.persona_idpersona = p.id_persona
+                WHERE 1=1";
+        $sql .= $this->condicionFiltros($filtros, $params);
+
+        $stmt = $this->conn->prepare($sql);
+        foreach ($params as $clave => $valor) {
+            $stmt->bindValue(":$clave", $valor);
+        }
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
+    }
+
+    // LISTAR solo las ventas CANCELADAS (con paginación)
+    public function listarCanceladas($limite = 10, $offset = 0) {
         $sql = "SELECT v.*,
                     CONCAT(p.nombre, ' ', p.apellido) AS nombre_cliente
                 FROM venta v
                 LEFT JOIN cliente c ON v.cliente_idcliente = c.id_cliente
                 LEFT JOIN persona p ON c.persona_idpersona = p.id_persona
-                ORDER BY v.fecha DESC";
-        return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+                WHERE v.estado = 'cancelada'
+                ORDER BY v.fecha DESC
+                LIMIT :limite OFFSET :offset";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // RESUMEN de ventas canceladas: cantidad y monto total anulado
+    public function resumenCanceladas() {
+        $sql = "SELECT COUNT(*) AS cantidad, COALESCE(SUM(total), 0) AS monto
+                FROM venta
+                WHERE estado = 'cancelada'";
+        return $this->conn->query($sql)->fetch(PDO::FETCH_ASSOC);
+    }
+    
     // OBTENER una venta por ID
     public function obtener($id) {
         $sql = "SELECT v.*,
@@ -54,7 +132,7 @@ class venta {
                 VALUES (NOW(), :total, :metodo_de_pago, :cliente_id, :empleado_id)";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([
-            'total'          => 0, // se actualiza al final, una vez sumados los detalles con IVA
+            'total'          => 0, 
             'metodo_de_pago' => $data['metodo_de_pago'],
             'cliente_id'     => $data['cliente_idcliente'] ?: null,
             'empleado_id'    => $data['empleado_id_empleado'] ?: null
@@ -62,7 +140,7 @@ class venta {
         return $this->conn->lastInsertId();
     }
 
-    // Actualiza el total de la venta una vez que se conocen todos los detalles (con IVA incluido)
+    
     public function actualizarTotal($id_venta, $total) {
         $sql = "UPDATE venta SET total = :total WHERE id_venta = :id";
         $stmt = $this->conn->prepare($sql);
@@ -110,7 +188,7 @@ class venta {
 
     // Verifica si hay stock suficiente ANTES de tocar nada (se usa antes de confirmar la venta)
     public function hayStockSuficiente($id_producto, $cantidad) {
-        $sql = "SELECT stock_actual FROM inventario WHERE producto_id_producto = :id_producto";
+        $sql = "SELECT stock_actual FROM inventario WHERE producto_id_producto = :id_producto AND activo = 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute(['id_producto' => $id_producto]);
         $fila = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -120,7 +198,7 @@ class venta {
     // DESCONTAR stock en inventario y dejar registro en el historial de movimientos
     public function descontarStock($id_producto, $cantidad, $id_venta, $usuario_id = null) {
         $sql = "SELECT id_inventario, stock_actual FROM inventario
-                WHERE producto_id_producto = :id_producto";
+                WHERE producto_id_producto = :id_producto AND activo = 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute(['id_producto' => $id_producto]);
         $inv = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -160,7 +238,9 @@ class venta {
 
         foreach ($detalle as $d) {
             $sql = "SELECT id_inventario, stock_actual FROM inventario
-                    WHERE producto_id_producto = :id_producto";
+                    WHERE producto_id_producto = :id_producto
+                    ORDER BY activo DESC, id_inventario DESC
+                    LIMIT 1";
             $stmt = $this->conn->prepare($sql);
             $stmt->execute(['id_producto' => $d['productos_idproducto']]);
             $inv = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -211,9 +291,12 @@ class venta {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // LISTAR clientes para el select
+    // LISTAR clientes para el selector
     public function listarClientes() {
-        $sql = "SELECT c.id_cliente, CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo
+        $sql = "SELECT c.id_cliente,
+                    CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo,
+                    p.dni,
+                    p.telefono
                 FROM cliente c
                 JOIN persona p ON c.persona_idpersona = p.id_persona
                 ORDER BY p.nombre ASC";
@@ -222,9 +305,11 @@ class venta {
 
     // LISTAR productos con stock disponible
     public function listarProductos() {
-        $sql = "SELECT pr.id_producto, pr.nombre, pr.precio, i.stock_actual
+        $sql = "SELECT pr.id_producto, pr.nombre, pr.precio, i.stock_actual,
+                    t.talles_disponibles AS talle
                 FROM producto pr
-                LEFT JOIN inventario i ON i.producto_id_producto = pr.id_producto
+                LEFT JOIN inventario i ON i.producto_id_producto = pr.id_producto AND i.activo = 1
+                LEFT JOIN talle t ON t.id_talle = pr.talle_id_talle
                 WHERE pr.activo = 1
                 ORDER BY pr.nombre ASC";
         return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);

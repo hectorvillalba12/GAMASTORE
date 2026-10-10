@@ -17,8 +17,25 @@ class InventarioController {
 
     public function index() {
         Auth::verificarModulo('inventario');
-        $inventarios  = $this->inventario->listar();
-        $stockBajo    = $this->inventario->contarStockBajo();
+
+        // PAGINACIÓN
+        $porPagina        = 10;
+        $totalInventarios = $this->inventario->contar();
+        $totalPaginas     = max(1, (int)ceil($totalInventarios / $porPagina));
+
+        $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+        if ($pagina < 1) $pagina = 1;
+        if ($pagina > $totalPaginas) $pagina = $totalPaginas;
+
+        $offset = ($pagina - 1) * $porPagina;
+
+        $desde = $totalInventarios > 0 ? $offset + 1 : 0;
+        $hasta = min($offset + $porPagina, $totalInventarios);
+
+        $inventarios          = $this->inventario->listar($porPagina, $offset);
+        $inventariosInactivos = $this->inventario->listarInactivos();
+        $stockBajo            = $this->inventario->contarStockBajo();
+
         require __DIR__ . '/views/index.php';
     }
 
@@ -184,6 +201,7 @@ class InventarioController {
     }
     
         // ELIMINAR físicamente una fila de inventario (solo si no tiene movimientos cargados)
+    // BAJA LÓGICA de una fila de inventario (ya no se borra físicamente)
     public function delete() {
         Auth::verificarModulo('inventario');
         $id   = $_GET['id'];
@@ -194,13 +212,38 @@ class InventarioController {
             exit();
         }
 
-        if ($this->inventario->tieneMovimientos($id)) {
-            header("Location: index.php?action=inventario&error=tiene_movimientos");
+        $this->inventario->darDeBaja($id);
+
+        // AUDITORÍA: se registra la baja lógica
+        Auditoria::registrar('inventario', $id, 'baja', $item, ['activo' => 0]);
+
+        header("Location: index.php?action=inventario&baja=1");
+        exit();
+    }
+
+    // REACTIVAR una fila de inventario dada de baja
+    public function reactivar() {
+        Auth::verificarModulo('inventario');
+        $id   = $_GET['id'];
+        $item = $this->inventario->obtener($id);
+
+        if (!$item) {
+            header("Location: index.php?action=inventario");
             exit();
         }
 
-        $this->inventario->eliminar($id);
-        header("Location: index.php?action=inventario&eliminado=1");
+        // Si el producto ya tiene otra fila activa, no se puede reactivar esta (duplicaría el stock)
+        if ($this->inventario->productoTieneFilaActiva($item['producto_id_producto'], $id)) {
+            header("Location: index.php?action=inventario&error=ya_activo");
+            exit();
+        }
+
+        $this->inventario->reactivar($id);
+
+        // AUDITORÍA: se registra la reactivación
+        Auditoria::registrar('inventario', $id, 'reactivar', $item, ['activo' => 1]);
+
+        header("Location: index.php?action=inventario&reactivado=1");
         exit();
     }
 }

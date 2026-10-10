@@ -82,12 +82,12 @@ class AuthController {
 
             try {
                 $mail->isSMTP();
-                $mail->Host       = $_ENV['MAIL_HOST'] ?? 'smtp.gmail.com';
+                $mail->Host       = $_ENV['MAIL_HOST'];
                 $mail->SMTPAuth   = true;
-                $mail->Username   = $_ENV['MAIL_USERNAME'] ?? '';
-                $mail->Password   = $_ENV['MAIL_PASSWORD'] ?? '';
-                $mail->SMTPSecure = $_ENV['MAIL_ENCRYPTION'] ?? 'tls';
-                $mail->Port       = (int) ($_ENV['MAIL_PORT'] ?? 587);
+                $mail->Username   = $_ENV['MAIL_USERNAME'];
+                $mail->Password   = $_ENV['MAIL_PASSWORD'];
+                $mail->SMTPSecure = $_ENV['MAIL_ENCRYPTION'];
+                $mail->Port       = (int) ($_ENV['MAIL_PORT']);
 
                 $mail->setFrom($_ENV['MAIL_USERNAME'] ?? '', $_ENV['MAIL_FROM_NAME'] ?? 'GAMASTORE');
                 $mail->addAddress($email);

@@ -13,8 +13,32 @@ class ProductController {
 
     public function index() {
         Auth::verificarModulo('productos');
-        $productos          = $this->producto->listar();
+
+        
+        $filtroMarca = $_GET['marca'] ?? '';
+        $filtroTalle = $_GET['talle'] ?? '';
+
+        
+        $marcas = $this->db->query("SELECT * FROM marca ORDER BY marcas_disponibles ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $talles = $this->db->query("SELECT * FROM talle ORDER BY talles_disponibles ASC")->fetchAll(PDO::FETCH_ASSOC);
+
+        // PAGINACIÓN
+        $porPagina      = 10; 
+        $totalProductos = $this->producto->contarActivos($filtroMarca, $filtroTalle);
+        $totalPaginas   = max(1, (int)ceil($totalProductos / $porPagina));
+
+        $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+        if ($pagina < 1) $pagina = 1;
+        if ($pagina > $totalPaginas) $pagina = $totalPaginas;
+
+        $offset = ($pagina - 1) * $porPagina;
+
+        $desde = $totalProductos > 0 ? $offset + 1 : 0;
+        $hasta = min($offset + $porPagina, $totalProductos);
+
+        $productos          = $this->producto->listar($filtroMarca, $filtroTalle, $porPagina, $offset);
         $productosInactivos = $this->producto->listarInactivos();
+
         require __DIR__ . '/views/index.php';
     }
 

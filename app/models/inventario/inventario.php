@@ -6,7 +6,8 @@ class Inventario {
         $this->conn = $db;
     }
 
-    public function listar() {
+    // LISTAR inventario ACTIVO con paginación
+    public function listar($limite = 10, $offset = 0) {
         $sql = "SELECT i.*,
                     p.nombre AS nombre_producto,
                     p.precio,
@@ -17,10 +18,23 @@ class Inventario {
                 LEFT JOIN producto p ON i.producto_id_producto = p.id_producto
                 LEFT JOIN talle t ON p.talle_id_talle = t.id_talle
                 LEFT JOIN color c ON p.color_id_color = c.id_color
-                ORDER BY p.nombre ASC";
-        return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+                WHERE i.activo = 1
+                ORDER BY p.nombre ASC
+                LIMIT :limite OFFSET :offset";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // CONTAR filas de inventario ACTIVAS (para calcular las páginas)
+    public function contar() {
+        return (int)$this->conn->query("SELECT COUNT(*) FROM inventario WHERE activo = 1")->fetchColumn();
+    }
+    
+    // OBTENER una fila de inventario por ID
     public function obtener($id) {
         $sql = "SELECT i.*,
             p.nombre AS nombre_producto,
@@ -33,13 +47,27 @@ class Inventario {
         $stmt->execute(['id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-
+    // LISTAR filas de inventario INACTIVAS (baja lógica)
+    public function listarInactivos() {
+        $sql = "SELECT i.*,
+                    p.nombre AS nombre_producto,
+                    p.tipodezapatillas,
+                    t.talles_disponibles AS talle,
+                    c.colores_disponibles AS color
+                FROM inventario i
+                LEFT JOIN producto p ON i.producto_id_producto = p.id_producto
+                LEFT JOIN talle t ON p.talle_id_talle = t.id_talle
+                LEFT JOIN color c ON p.color_id_color = c.id_color
+                WHERE i.activo = 0
+                ORDER BY p.nombre ASC";
+        return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
     // CANTIDAD de items con stock bajo — para mostrar como aviso en el listado / dashboard
     public function contarStockBajo() {
-        $sql = "SELECT COUNT(*) FROM inventario WHERE stock_actual <= stock_minimo";
+        $sql = "SELECT COUNT(*) FROM inventario WHERE activo = 1 AND stock_actual <= stock_minimo";
         return $this->conn->query($sql)->fetchColumn();
     }
-
+    
     // CREAR carga manual de inventario (alta inicial de una fila)
     public function crear($data, $usuario_id = null) {
         $sql = "INSERT INTO inventario (stock_actual, ubicacion, stock_maximo, stock_minimo, producto_id_producto)
@@ -176,18 +204,26 @@ class Inventario {
         $sql = "SELECT * FROM producto WHERE activo = 1 ORDER BY nombre ASC";
         return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
-        // Chequea si la fila de inventario tiene movimientos cargados (entradas/salidas/ajustes)
-    public function tieneMovimientos($id_inventario) {
-        $sql  = "SELECT COUNT(*) FROM movimiento_inventario WHERE inventario_id_inventario = :id";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute(['id' => $id_inventario]);
-        return $stmt->fetchColumn() > 0;
-    }
-
-    // ELIMINAR físicamente una fila de inventario (solo si no tiene movimientos, ver tieneMovimientos)
-    public function eliminar($id_inventario) {
-        $sql  = "DELETE FROM inventario WHERE id_inventario = :id";
+    // BAJA LÓGICA — pone activo = 0 en lugar de borrar (el historial de movimientos se conserva)
+    public function darDeBaja($id_inventario) {
+        $sql  = "UPDATE inventario SET activo = 0 WHERE id_inventario = :id";
         $stmt = $this->conn->prepare($sql);
         return $stmt->execute(['id' => $id_inventario]);
+    }
+
+    // REACTIVAR — pone activo = 1
+    public function reactivar($id_inventario) {
+        $sql  = "UPDATE inventario SET activo = 1 WHERE id_inventario = :id";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute(['id' => $id_inventario]);
+    }
+
+    // ¿El producto ya tiene OTRA fila de inventario activa? (evita duplicados al reactivar)
+    public function productoTieneFilaActiva($id_producto, $excluir_id) {
+        $sql  = "SELECT COUNT(*) FROM inventario
+                WHERE producto_id_producto = :producto AND activo = 1 AND id_inventario != :excluir";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute(['producto' => $id_producto, 'excluir' => $excluir_id]);
+        return $stmt->fetchColumn() > 0;
     }
 }

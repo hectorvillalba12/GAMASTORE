@@ -20,8 +20,53 @@ class VentaController {
 
     public function index() {
         Auth::verificarModulo('ventas');
-        $ventas = $this->venta->listar();
+
+        // FILTROS 
+        $filtros    = ['cliente' => trim($_GET['cliente'] ?? '')];
+        $hayFiltros = ($filtros['cliente'] !== '');
+
+        // PAGINACIÓN
+        $porPagina    = 10; 
+        $totalVentas  = $this->venta->contar($filtros);
+        $totalPaginas = max(1, (int)ceil($totalVentas / $porPagina));
+
+        $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+        if ($pagina < 1) $pagina = 1;
+        if ($pagina > $totalPaginas) $pagina = $totalPaginas;
+
+        $offset = ($pagina - 1) * $porPagina;
+
+        $desde = $totalVentas > 0 ? $offset + 1 : 0;
+        $hasta = min($offset + $porPagina, $totalVentas);
+
+        $ventas = $this->venta->listar($filtros, $porPagina, $offset);
+
         require __DIR__ . '/views/index.php';
+    }
+    // REGISTRO de ventas canceladas
+    public function canceladas() {
+        Auth::verificarModulo('ventas');
+
+        $resumen         = $this->venta->resumenCanceladas();
+        $totalCanceladas = (int)$resumen['cantidad'];
+        $montoCancelado  = (float)$resumen['monto'];
+
+        // PAGINACIÓN
+        $porPagina    = 3;
+        $totalPaginas = max(1, (int)ceil($totalCanceladas / $porPagina));
+
+        $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+        if ($pagina < 1) $pagina = 1;
+        if ($pagina > $totalPaginas) $pagina = $totalPaginas;
+
+        $offset = ($pagina - 1) * $porPagina;
+
+        $desde = $totalCanceladas > 0 ? $offset + 1 : 0;
+        $hasta = min($offset + $porPagina, $totalCanceladas);
+
+        $ventas = $this->venta->listarCanceladas($porPagina, $offset);
+
+        require __DIR__ . '/views/canceladas.php';
     }
 
     public function create() {
@@ -29,8 +74,6 @@ class VentaController {
         $clientes  = $this->venta->listarClientes();
         $productos = $this->venta->listarProductos();
 
-        // Se arma un mapa id_producto => promoción vigente (sin filtrar por cliente todavía,
-        // porque el cliente recién se elige en el formulario). Sirve para mostrar un aviso visual.
         $promosPorProducto = [];
         foreach ($productos as $p) {
             $promo = $this->promocion->obtenerPromocionVigenteParaProducto($p['id_producto']);
@@ -83,10 +126,7 @@ class VentaController {
                 $precio_unitario = (float)$precios_unitarios[$i];
                 $nombre_producto = $_POST['nombre_producto'][$i] ?? "Producto #{$pid}";
 
-                // Se busca si el producto tiene una promoción vigente, respetando la
-                // restricción por cliente si la promoción la tiene, y solo si el vendedor
-                // no la desactivó manualmente para esta línea (checkbox "Aplicar promoción").
-                $quierePromo = ($aplicar_promo[$i] ?? '1') !== '0';
+                $quierePromo = ($aplicar_promo[$i] ?? '0') === '1';
                 $promo = $quierePromo ? $this->promocion->obtenerPromocionVigenteParaProducto($pid, $cliente_id) : null;
                 $promoParaDetalle = null;
 

@@ -20,8 +20,28 @@ class ClienteController {
 
     public function index() {
         Auth::verificarModulo('clientes');
-        $clientes          = $this->cliente->listar();
+
+        // Texto de búsqueda que llega por GET (vacío = sin filtrar)
+        $buscar = trim($_GET['buscar'] ?? '');
+
+        // PAGINACIÓN
+        $porPagina     = 10; // cantidad de clientes por página (cambialo si querés)
+        $totalClientes = $this->cliente->contar($buscar);
+        $totalPaginas  = max(1, (int)ceil($totalClientes / $porPagina));
+
+        $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+        if ($pagina < 1) $pagina = 1;
+        if ($pagina > $totalPaginas) $pagina = $totalPaginas;
+
+        $offset = ($pagina - 1) * $porPagina;
+
+        // Rango que se está mostrando (para el texto "Mostrando X a Y de Z")
+        $desde = $totalClientes > 0 ? $offset + 1 : 0;
+        $hasta = min($offset + $porPagina, $totalClientes);
+
+        $clientes          = $this->cliente->listar($buscar, $porPagina, $offset);
         $clientesInactivos = $this->cliente->listarInactivos();
+
         require __DIR__ . '/views/index.php';
     }
 
@@ -143,20 +163,18 @@ class ClienteController {
         exit();
     }
 
-    private function enviarEmailVerificacion($email, $nombre) {
-        require_once __DIR__ . '/../../../vendor/autoload.php';
-
+        private function enviarEmailVerificacion($email, $nombre) {
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
+            $mail->Host       = $_ENV['MAIL_HOST'];
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'villalbahector257@gmail.com';
-            $mail->Password   = 'asnh pmmf wfst igbj';
-            $mail->SMTPSecure = 'tls';
-            $mail->Port       = 587;
+            $mail->Username   = $_ENV['MAIL_USERNAME'];
+            $mail->Password   = $_ENV['MAIL_PASSWORD'];
+            $mail->SMTPSecure = $_ENV['MAIL_ENCRYPTION'];
+            $mail->Port       = (int) ($_ENV['MAIL_PORT']);
 
-            $mail->setFrom('villalbahector257@gmail.com', 'GAMASTORE');
+            $mail->setFrom($_ENV['MAIL_USERNAME'] ?? '', $_ENV['MAIL_FROM_NAME'] ?? 'GAMASTORE');
             $mail->addAddress($email);
             $mail->isHTML(true);
             $mail->Subject = 'Bienvenido/a a GamaStore 👟';

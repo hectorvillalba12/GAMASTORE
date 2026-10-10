@@ -159,7 +159,9 @@ switch ($action) {
     case 'inventario_eliminar':
         (new InventarioController())->delete();
         break;
-
+    case 'inventario_reactivar':
+        (new InventarioController())->reactivar();
+        break;
     // PRODUCTOS
     case 'productos':
         $product->index();
@@ -238,6 +240,10 @@ switch ($action) {
 
     case 'ventas_cancelar':
         $venta->cancelar();
+        break;
+        
+    case 'ventas_canceladas':
+        $venta->canceladas();
         break;
     //PERFILES
     case 'perfiles':

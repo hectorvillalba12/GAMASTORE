@@ -1,5 +1,4 @@
-// Junta todos los <canvas> de gráficos de la pantalla actual (los que arrancan con id "grafico")
-// y los convierte en imágenes PNG en base64, junto con el título de su card.
+
 function capturarGraficos() {
     const canvases = document.querySelectorAll('canvas[id^="grafico"]');
     const graficos = [];

@@ -6,15 +6,69 @@ class Cliente {
         $this->conn = $db;
     }
 
-    // LISTAR solo clientes ACTIVOS
-    public function listar() {
+    // Arma las condiciones de búsqueda (nombre, apellido, DNI, teléfono).
+    // Mismo criterio que el buscador de "Nueva venta": varias palabras, sin importar mayúsculas ni tildes.
+    private function condicionBusqueda($buscar, &$params) {
+        $sql      = '';
+        $terminos = preg_split('/\s+/', trim($buscar), -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($terminos as $i => $t) {
+            // Escapa los comodines de LIKE para que % y _ se busquen como texto normal
+            $t = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $t);
+            $sql .= " AND CONCAT_WS(' ', p.nombre, p.apellido, p.dni, p.telefono) LIKE :t$i";
+            $params["t$i"] = '%' . $t . '%';
+        }
+        return $sql;
+    }
+
+    // LISTAR clientes ACTIVOS (con búsqueda y paginación opcionales)
+    public function listar($buscar = '', $limite = null, $offset = 0) {
+        $params = [];
+
         $sql = "SELECT c.id_cliente, c.fecha_registro, c.estado, c.email_verificado,
                     p.id_persona, p.nombre, p.apellido, p.dni, p.email, p.telefono
                 FROM cliente c
                 JOIN persona p ON c.persona_idpersona = p.id_persona
-                WHERE c.estado = 'activo'
-                ORDER BY p.nombre ASC";
-        return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+                WHERE c.estado = 'activo'";
+
+        $sql .= $this->condicionBusqueda($buscar, $params);
+        $sql .= " ORDER BY p.nombre ASC, p.apellido ASC, c.id_cliente ASC";
+
+        if ($limite !== null) {
+            $sql .= " LIMIT :limite OFFSET :offset";
+        }
+
+        $stmt = $this->conn->prepare($sql);
+
+        foreach ($params as $clave => $valor) {
+            $stmt->bindValue(':' . $clave, $valor);
+        }
+        if ($limite !== null) {
+            $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // CONTAR clientes ACTIVOS (respetando la búsqueda) para calcular las páginas
+    public function contar($buscar = '') {
+        $params = [];
+
+        $sql = "SELECT COUNT(*)
+                FROM cliente c
+                JOIN persona p ON c.persona_idpersona = p.id_persona
+                WHERE c.estado = 'activo'";
+
+        $sql .= $this->condicionBusqueda($buscar, $params);
+
+        $stmt = $this->conn->prepare($sql);
+        foreach ($params as $clave => $valor) {
+            $stmt->bindValue(':' . $clave, $valor);
+        }
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
     }
 
     // LISTAR solo clientes INACTIVOS (baja lógica)

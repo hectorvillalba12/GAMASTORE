@@ -36,17 +36,24 @@
         </div>
     <?php endif; ?>
 
-    <?php if (isset($_GET['eliminado'])): ?>
-        <div class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-trash me-1"></i> Fila de inventario eliminada correctamente.
+    <?php if (isset($_GET['baja'])): ?>
+        <div class="alert alert-warning alert-dismissible fade show">
+            <i class="bi bi-box-arrow-down me-1"></i> Fila de inventario dada de baja correctamente.
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
 
-    <?php if (isset($_GET['error']) && $_GET['error'] === 'tiene_movimientos'): ?>
+    <?php if (isset($_GET['reactivado'])): ?>
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-box-arrow-up me-1"></i> Fila de inventario reactivada correctamente.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+
+    <?php if (isset($_GET['error']) && $_GET['error'] === 'ya_activo'): ?>
         <div class="alert alert-danger alert-dismissible fade show">
             <i class="bi bi-exclamation-triangle-fill me-1"></i>
-            No se puede eliminar: esta fila tiene movimientos de entrada/salida cargados en su historial.
+            No se puede reactivar: ese producto ya tiene otra fila de inventario activa.
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
@@ -61,6 +68,7 @@
         </div>
     <?php endif; ?>
 
+    <!-- TABLA INVENTARIO ACTIVO -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -132,9 +140,9 @@
                                     <i class="bi bi-clock-history"></i>
                                 </a>
                                 <a href="index.php?action=inventario_eliminar&id=<?= $i['id_inventario'] ?>"
-                                    class="btn btn-outline-danger btn-sm" title="Eliminar"
-                                    onclick="return confirm('¿Eliminar esta fila de inventario? Esta acción no se puede deshacer.');">
-                                    <i class="bi bi-trash"></i>
+                                    class="btn btn-outline-danger btn-sm" title="Dar de baja"
+                                    onclick="return confirm('¿Dar de baja esta fila de inventario? No se elimina: queda inactiva y se puede reactivar cuando quieras.');">
+                                    <i class="bi bi-box-arrow-down"></i>
                                 </a>
                             </td>
                         </tr>
@@ -145,6 +153,130 @@
             </div>
         </div>
     </div>
+
+    <!-- PAGINACIÓN -->
+    <?php if ($totalInventarios > 0): ?>
+        <?php
+            $paramsBase = ['action' => 'inventario'];
+
+            // Ventana de páginas visibles: 2 antes y 2 después de la actual
+            $inicio = max(1, $pagina - 2);
+            $fin    = min($totalPaginas, $pagina + 2);
+        ?>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 mb-4 gap-2">
+            <small class="text-muted">
+                Mostrando <?= $desde ?> a <?= $hasta ?> de <?= $totalInventarios ?> registros
+            </small>
+
+            <?php if ($totalPaginas > 1): ?>
+            <nav aria-label="Paginación de inventario">
+                <ul class="pagination pagination-sm mb-0">
+
+                    <!-- Anterior -->
+                    <li class="page-item <?= ($pagina <= 1) ? 'disabled' : '' ?>">
+                        <a class="page-link"
+                        href="index.php?<?= http_build_query($paramsBase + ['pagina' => $pagina - 1]) ?>">
+                            &laquo; Anterior
+                        </a>
+                    </li>
+
+                    <!-- Primera página + puntos suspensivos -->
+                    <?php if ($inicio > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link"
+                            href="index.php?<?= http_build_query($paramsBase + ['pagina' => 1]) ?>">1</a>
+                        </li>
+                        <?php if ($inicio > 2): ?>
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    <!-- Páginas del medio -->
+                    <?php for ($p = $inicio; $p <= $fin; $p++): ?>
+                        <li class="page-item <?= ($p == $pagina) ? 'active' : '' ?>">
+                            <a class="page-link"
+                            href="index.php?<?= http_build_query($paramsBase + ['pagina' => $p]) ?>">
+                                <?= $p ?>
+                            </a>
+                        </li>
+                    <?php endfor; ?>
+
+                    <!-- Última página + puntos suspensivos -->
+                    <?php if ($fin < $totalPaginas): ?>
+                        <?php if ($fin < $totalPaginas - 1): ?>
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        <?php endif; ?>
+                        <li class="page-item">
+                            <a class="page-link"
+                            href="index.php?<?= http_build_query($paramsBase + ['pagina' => $totalPaginas]) ?>">
+                                <?= $totalPaginas ?>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+
+                    <!-- Siguiente -->
+                    <li class="page-item <?= ($pagina >= $totalPaginas) ? 'disabled' : '' ?>">
+                        <a class="page-link"
+                        href="index.php?<?= http_build_query($paramsBase + ['pagina' => $pagina + 1]) ?>">
+                            Siguiente &raquo;
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- TABLA INVENTARIO INACTIVO (baja lógica) -->
+    <?php if (!empty($inventariosInactivos)): ?>
+    <div class="card shadow-sm border-secondary mb-4">
+        <div class="card-header bg-secondary text-white">
+            <i class="bi bi-box"></i> Inventario inactivo (baja lógica)
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>#</th>
+                            <th>Producto</th>
+                            <th>Tipo</th>
+                            <th>Talle</th>
+                            <th>Color</th>
+                            <th>Ubicación</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($inventariosInactivos as $inv): ?>
+                        <tr class="table-light text-muted">
+                            <td><?= $inv['id_inventario'] ?></td>
+                            <td><?= htmlspecialchars($inv['nombre_producto'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($inv['tipodezapatillas'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($inv['talle'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($inv['color'] ?? '—') ?></td>
+                            <td><?= htmlspecialchars($inv['ubicacion'] ?: '—') ?></td>
+                            <td class="text-center"><?= $inv['stock_actual'] ?></td>
+                            <td class="text-center text-nowrap">
+                                <a href="index.php?action=inventario_historial&id=<?= $inv['id_inventario'] ?>"
+                                class="btn btn-outline-secondary btn-sm" title="Ver historial">
+                                    <i class="bi bi-clock-history"></i>
+                                </a>
+                                <a href="index.php?action=inventario_reactivar&id=<?= $inv['id_inventario'] ?>"
+                                class="btn btn-success btn-sm" title="Reactivar">
+                                    <i class="bi bi-box-arrow-up"></i> Reactivar
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
 </div>
 

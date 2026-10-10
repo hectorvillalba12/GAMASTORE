@@ -52,7 +52,7 @@
 
         var spanNombre = document.createElement('span');
         spanNombre.className = 'fw-semibold';
-        spanNombre.textContent = nombre;          // textContent evita inyección de HTML (XSS)
+        spanNombre.textContent = nombre;          
 
         caja.appendChild(icono);
         caja.appendChild(spanNombre);

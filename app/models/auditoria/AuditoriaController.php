@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../ayudantes/Auditoria.php';
 
 class AuditoriaController {
 
-    // LISTAR historial de auditoría (modulo propio, accesible desde el dashboard)
+    // LISTAR historial de auditoría 
     public function index() {
         Auth::verificarModulo('auditoria');
 

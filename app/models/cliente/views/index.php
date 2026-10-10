@@ -44,6 +44,33 @@
         </div>
     <?php endif; ?>
 
+    <!-- BUSCADOR DE CLIENTES (nombre, DNI o teléfono) -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="GET" action="index.php" class="row g-2 align-items-end">
+                <input type="hidden" name="action" value="clientes">
+
+                <div class="col-12 col-md-8">
+                    <label class="form-label fw-semibold" for="buscar">
+                        <i class="bi bi-search"></i> Buscar cliente
+                    </label>
+                    <input type="text" id="buscar" name="buscar" class="form-control"
+                        placeholder="Buscar por nombre, DNI o teléfono..." autocomplete="off"
+                        value="<?= htmlspecialchars($buscar) ?>">
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <button type="submit" class="btn btn-dark">
+                        <i class="bi bi-funnel"></i> Buscar
+                    </button>
+                    <a href="index.php?action=clientes" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- TABLA CLIENTES ACTIVOS -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-dark text-white">
@@ -67,7 +94,9 @@
                     <tbody>
                     <?php if (empty($clientes)): ?>
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">No hay clientes activos.</td>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <?= ($buscar !== '') ? 'No se encontraron clientes con esa búsqueda.' : 'No hay clientes activos.' ?>
+                            </td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($clientes as $c): ?>
@@ -101,6 +130,82 @@
             </div>
         </div>
     </div>
+
+    <!-- PAGINACIÓN -->
+    <?php if ($totalClientes > 0): ?>
+        <?php
+            // Mantiene la búsqueda en los links de cada página
+            $paramsBase = ['action' => 'clientes'];
+            if ($buscar !== '') $paramsBase['buscar'] = $buscar;
+
+            // Ventana de páginas visibles: 2 antes y 2 después de la actual
+            $inicio = max(1, $pagina - 2);
+            $fin    = min($totalPaginas, $pagina + 2);
+        ?>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-2">
+            <small class="text-muted">
+                Mostrando <?= $desde ?> a <?= $hasta ?> de <?= $totalClientes ?> clientes
+            </small>
+
+            <?php if ($totalPaginas > 1): ?>
+            <nav aria-label="Paginación de clientes">
+                <ul class="pagination pagination-sm mb-0">
+
+                    <!-- Anterior -->
+                    <li class="page-item <?= ($pagina <= 1) ? 'disabled' : '' ?>">
+                        <a class="page-link"
+                        href="index.php?<?= http_build_query($paramsBase + ['pagina' => $pagina - 1]) ?>">
+                            &laquo; Anterior
+                        </a>
+                    </li>
+
+                    <!-- Primera página + puntos suspensivos -->
+                    <?php if ($inicio > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link"
+                            href="index.php?<?= http_build_query($paramsBase + ['pagina' => 1]) ?>">1</a>
+                        </li>
+                        <?php if ($inicio > 2): ?>
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    <!-- Páginas del medio -->
+                    <?php for ($p = $inicio; $p <= $fin; $p++): ?>
+                        <li class="page-item <?= ($p == $pagina) ? 'active' : '' ?>">
+                            <a class="page-link"
+                            href="index.php?<?= http_build_query($paramsBase + ['pagina' => $p]) ?>">
+                                <?= $p ?>
+                            </a>
+                        </li>
+                    <?php endfor; ?>
+
+                    <!-- Última página + puntos suspensivos -->
+                    <?php if ($fin < $totalPaginas): ?>
+                        <?php if ($fin < $totalPaginas - 1): ?>
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        <?php endif; ?>
+                        <li class="page-item">
+                            <a class="page-link"
+                            href="index.php?<?= http_build_query($paramsBase + ['pagina' => $totalPaginas]) ?>">
+                                <?= $totalPaginas ?>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+
+                    <!-- Siguiente -->
+                    <li class="page-item <?= ($pagina >= $totalPaginas) ? 'disabled' : '' ?>">
+                        <a class="page-link"
+                        href="index.php?<?= http_build_query($paramsBase + ['pagina' => $pagina + 1]) ?>">
+                            Siguiente &raquo;
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 
     <!-- TABLA CLIENTES INACTIVOS (baja lógica) -->
     <?php if (!empty($clientesInactivos)): ?>

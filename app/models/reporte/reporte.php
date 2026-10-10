@@ -78,7 +78,7 @@ class Reporte {
                 FROM inventario i
                 JOIN producto p ON i.producto_id_producto = p.id_producto
                 LEFT JOIN categoria cat ON p.categoria_id_categoria = cat.id_categoria
-                WHERE i.stock_actual <= i.stock_minimo
+                WHERE i.activo = 1 AND i.stock_actual <= i.stock_minimo
                 ORDER BY i.stock_actual ASC";
         return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }

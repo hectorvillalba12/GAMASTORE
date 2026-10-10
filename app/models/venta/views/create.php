@@ -27,7 +27,7 @@
         </div>
     <?php endif; ?>
 
-    <form action="index.php?action=ventas_guardar" method="POST">
+    <form action="index.php?action=ventas_guardar" method="POST" id="form_venta">
 
         <div class="row g-4">
 
@@ -41,14 +41,19 @@
 
                         <div class="mb-3">
                             <label class="form-label">Cliente</label>
-                            <select name="cliente_idcliente" class="form-select">
-                                <option value="">Consumidor final</option>
-                                <?php foreach ($clientes as $c): ?>
-                                    <option value="<?= $c['id_cliente'] ?>">
-                                        <?= htmlspecialchars($c['nombre_completo']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <!-- Vacío = Consumidor final -->
+                            <input type="hidden" name="cliente_idcliente" id="cliente_id" value="">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary text-start flex-grow-1"
+                                        id="btn_cliente" onclick="abrirSelectorCliente()">
+                                    <i class="bi bi-person"></i> Consumidor final
+                                </button>
+                                <button type="button" class="btn btn-outline-danger d-none"
+                                        id="btn_quitar_cliente" title="Volver a Consumidor final"
+                                        onclick="elegirCliente('')">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -83,7 +88,7 @@
                 <div class="card shadow-sm">
                     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                         <strong><i class="bi bi-box-seam"></i> Productos</strong>
-                        <button type="button" class="btn btn-sm btn-light" onclick="agregarFila()">
+                        <button type="button" class="btn btn-sm btn-light" onclick="agregarFila(true)">
                             <i class="bi bi-plus-lg"></i> Agregar producto
                         </button>
                     </div>
@@ -91,7 +96,8 @@
                         <table class="table mb-0">
                             <thead class="table-secondary">
                                 <tr>
-                                    <th>Producto</th>
+                                    <th style="min-width:170px">Producto</th>
+                                    <th class="text-center" style="width:70px">Talle</th>
                                     <th class="text-center" style="width:80px">Stock</th>
                                     <th class="text-center" style="width:90px">Cant.</th>
                                     <th class="text-end" style="width:110px">P. Unit.</th>
@@ -110,34 +116,202 @@
     </form>
 </div>
 
+<!-- MODAL: selector de clientes -->
+<div class="modal fade" id="modalClientes" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-lines-fill"></i> Seleccionar cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="px-3 pt-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="buscador_clientes" class="form-control"
+                        placeholder="Buscar por nombre, DNI o teléfono..." autocomplete="off">
+                </div>
+                <div class="form-text">Tocá un cliente para elegirlo. Enter elige el primero de la lista.</div>
+            </div>
+            <div class="modal-body">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>Cliente</th>
+                            <th style="width:140px">DNI</th>
+                            <th style="width:160px">Teléfono</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista_clientes"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: selector de productos -->
+<div class="modal fade" id="modalProductos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-box-seam"></i> Seleccionar producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="px-3 pt-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="buscador_productos" class="form-control"
+                        placeholder="Buscar por nombre o talle (ej: nike 45)..." autocomplete="off">
+                </div>
+                <div class="form-text">Tocá un producto para agregarlo a la venta. Enter elige el primero de la lista.</div>
+            </div>
+            <div class="modal-body">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center" style="width:90px">Talle</th>
+                            <th class="text-center" style="width:110px">Stock</th>
+                            <th class="text-end" style="width:130px">Precio</th>
+                            <th class="text-center" style="width:150px">Promo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista_productos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 const productosData      = <?= json_encode($productos) ?>;
 const promosPorProducto   = <?= json_encode($promosPorProducto) ?>;
+const clientesData       = <?= json_encode($clientes) ?>;
 
-function agregarFila() {
+let filaActual      = null;   // fila (idx) para la que se está eligiendo producto
+let modalProductos  = null;
+let modalClientes   = null;
+let ultimaLista     = [];     // resultados actuales del buscador de productos
+let ultimaListaCli  = [];     // resultados actuales del buscador de clientes
+
+// ---------- Utilidades ----------
+function esc(t) {
+    return String(t ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+function normalizar(t) {
+    return String(t ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function textoPromo(promo) {
+    return promo.tipo_descuento === 'porcentaje'
+        ? `-${promo.descuento_porcentaje}%`
+        : `-$${parseFloat(promo.monto_fijo).toFixed(2)}`;
+}
+
+// =====================================================
+//  CLIENTES
+// =====================================================
+function abrirSelectorCliente() {
+    if (!modalClientes) {
+        modalClientes = new bootstrap.Modal(document.getElementById('modalClientes'));
+    }
+    document.getElementById('buscador_clientes').value = '';
+    renderClientes('');
+    modalClientes.show();
+}
+
+function renderClientes(filtro) {
+    const terminos = normalizar(filtro).trim().split(/\s+/).filter(Boolean);
+    const tbody    = document.getElementById('lista_clientes');
+
+    ultimaListaCli = clientesData.filter(c => {
+        const texto = normalizar(c.nombre_completo + ' ' + (c.dni ?? '') + ' ' + (c.telefono ?? ''));
+        return terminos.every(t => texto.includes(t));
+    });
+
+    // Fila fija: Consumidor final (sin cliente)
+    let html = `<tr class="table-success" style="cursor:pointer" onclick="elegirCliente('')">
+                    <td colspan="3" class="fw-semibold">
+                        <i class="bi bi-person"></i> Consumidor final
+                        <span class="text-muted fw-normal small">(sin cliente)</span>
+                    </td>
+                </tr>`;
+
+    if (!ultimaListaCli.length) {
+        html += `<tr><td colspan="3" class="text-center text-muted py-4">
+                No se encontraron clientes
+                </td></tr>`;
+    } else {
+        html += ultimaListaCli.map(c => `
+            <tr style="cursor:pointer" onclick="elegirCliente('${c.id_cliente}')">
+                <td class="fw-semibold">${esc(c.nombre_completo)}</td>
+                <td>${esc(c.dni ?? '-')}</td>
+                <td>${esc(c.telefono ?? '-')}</td>
+            </tr>`).join('');
+    }
+
+    tbody.innerHTML = html;
+}
+
+function elegirCliente(id) {
+    const hidden = document.getElementById('cliente_id');
+    const btn    = document.getElementById('btn_cliente');
+    const quitar = document.getElementById('btn_quitar_cliente');
+
+    if (!id) {
+        hidden.value  = '';
+        btn.className = 'btn btn-outline-secondary text-start flex-grow-1';
+        btn.innerHTML = '<i class="bi bi-person"></i> Consumidor final';
+        quitar.classList.add('d-none');
+    } else {
+        const c = clientesData.find(x => x.id_cliente == id);
+        if (!c) return;
+        hidden.value  = c.id_cliente;
+        btn.className = 'btn btn-outline-success text-start flex-grow-1';
+        btn.innerHTML = `<i class="bi bi-person-check-fill"></i> ${esc(c.nombre_completo)}` +
+                        (c.dni ? ` <span class="text-muted small">· DNI ${esc(c.dni)}</span>` : '');
+        quitar.classList.remove('d-none');
+    }
+
+    if (modalClientes) modalClientes.hide();
+}
+
+const buscadorCli = document.getElementById('buscador_clientes');
+buscadorCli.addEventListener('input', () => renderClientes(buscadorCli.value));
+buscadorCli.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        // Enter solo elige si hay algo escrito (evita elegir un cliente por accidente)
+        if (buscadorCli.value.trim() && ultimaListaCli.length) {
+            elegirCliente(ultimaListaCli[0].id_cliente);
+        }
+    }
+});
+document.getElementById('modalClientes').addEventListener('shown.bs.modal', () => buscadorCli.focus());
+
+// =====================================================
+//  FILAS DE LA VENTA
+// =====================================================
+function agregarFila(abrirSelectorAuto = false) {
     const tbody = document.getElementById('filas_productos');
     const idx   = Date.now(); // ID único por fila
-
-    let options = '<option value="">-- Producto --</option>';
-    productosData.forEach(p => {
-    const promo = promosPorProducto[p.id_producto];
-    const etiquetaPromo = promo
-        ? (promo.tipo_descuento === 'porcentaje'
-            ? ` 🏷️ -${promo.descuento_porcentaje}%`
-            : ` 🏷️ -$${parseFloat(promo.monto_fijo).toFixed(2)}`)
-        : '';
-    options += `<option value="${p.id_producto}" data-precio="${p.precio}" data-stock="${p.stock_actual ?? 0}">
-                    ${p.nombre} (Stock: ${p.stock_actual ?? 0})${etiquetaPromo}
-                </option>`;
-});
 
     const tr = document.createElement('tr');
     tr.dataset.idx = idx;
     tr.innerHTML = `
-        <td>
-            <select name="producto_id[]" class="form-select form-select-sm" required onchange="alSeleccionar(this, '${idx}')">
-                ${options}
-            </select>
+        <td class="align-middle">
+            <input type="hidden" name="producto_id[]" id="prod_${idx}" value="">
+            <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-start"
+                    id="btn_prod_${idx}" onclick="abrirSelector('${idx}')">
+                <i class="bi bi-search"></i> Seleccionar producto
+            </button>
+        </td>
+        <td class="text-center align-middle">
+            <span id="talle_${idx}">—</span>
         </td>
         <td class="text-center align-middle">
             <span id="stock_${idx}">—</span>
@@ -151,9 +325,9 @@ function agregarFila() {
         </td>
         <td class="text-end align-middle" id="precio_label_${idx}">$0.00</td>
         <td class="text-center align-middle" id="promo_celda_${idx}">
-            <input type="hidden" name="aplicar_promo[]" id="aplica_promo_${idx}" value="1">
-            <div class="form-check form-switch d-flex justify-content-center" id="promo_toggle_${idx}" style="display:none;">
-                <input class="form-check-input" type="checkbox" role="switch" id="chk_promo_${idx}" checked
+            <input type="hidden" name="aplicar_promo[]" id="aplica_promo_${idx}" value="0">
+            <div class="form-check form-switch d-flex justify-content-center d-none" id="promo_toggle_${idx}">
+                <input class="form-check-input" type="checkbox" role="switch" id="chk_promo_${idx}"
                     title="Aplicar promoción a esta línea"
                     onchange="document.getElementById('aplica_promo_${idx}').value = this.checked ? '1' : '0'; calcularFila('${idx}')">
             </div>
@@ -168,45 +342,128 @@ function agregarFila() {
         </td>
     `;
     tbody.appendChild(tr);
+
+    if (abrirSelectorAuto) abrirSelector(idx);
 }
 
-function alSeleccionar(sel, idx) {
-    const opt    = sel.options[sel.selectedIndex];
-    const precio = parseFloat(opt.dataset.precio || 0);
-    const stock  = parseInt(opt.dataset.stock || 0);
-    const idProducto = opt.value;
+// =====================================================
+//  PRODUCTOS (modal selector)
+// =====================================================
+function abrirSelector(idx) {
+    filaActual = idx;
+    if (!modalProductos) {
+        modalProductos = new bootstrap.Modal(document.getElementById('modalProductos'));
+    }
+    document.getElementById('buscador_productos').value = '';
+    renderLista('');
+    modalProductos.show();
+}
 
-    document.getElementById(`precio_${idx}`).value              = precio;
-    const productoObj = productosData.find(p => p.id_producto == idProducto);
-    document.getElementById(`nombre_${idx}`).value               = productoObj ? productoObj.nombre : opt.textContent.trim();
-    document.getElementById(`stock_${idx}`).textContent         = stock;
-    document.getElementById(`precio_label_${idx}`).textContent  = '$' + precio.toFixed(2);
-    document.getElementById(`cant_${idx}`).max                  = stock;
+function renderLista(filtro) {
+    const terminos = normalizar(filtro).trim().split(/\s+/).filter(Boolean);
+    const tbody    = document.getElementById('lista_productos');
 
-    // Muestra u oculta el switch de "aplicar promoción" según si el producto elegido tiene una vigente
-    const promo         = promosPorProducto[idProducto];
-    const toggleDiv      = document.getElementById(`promo_toggle_${idx}`);
-    const labelDiv       = document.getElementById(`promo_label_${idx}`);
-    const chk            = document.getElementById(`chk_promo_${idx}`);
-    const hiddenAplica   = document.getElementById(`aplica_promo_${idx}`);
+    ultimaLista = productosData.filter(p => {
+        const texto = normalizar(p.nombre + ' ' + (p.talle ?? ''));
+        return terminos.every(t => texto.includes(t));
+    });
+
+    if (!ultimaLista.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">
+                            No se encontraron productos
+                        </td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = ultimaLista.map(p => {
+        const stock    = parseInt(p.stock_actual ?? 0);
+        const talle    = p.talle ? p.talle : '-';
+        const promo    = promosPorProducto[p.id_producto];
+        const sinStock = stock <= 0;
+
+        const badgeStock = sinStock
+            ? '<span class="badge bg-secondary">Sin stock</span>'
+            : `<span class="badge ${stock <= 3 ? 'bg-warning text-dark' : 'bg-success'}">${stock}</span>`;
+
+        const badgePromo = promo
+            ? `<span class="badge bg-danger">🏷️ ${esc(textoPromo(promo))}</span>`
+            : '';
+
+        return `<tr class="${sinStock ? 'text-muted' : ''}"
+                    style="${sinStock ? 'opacity:.55' : 'cursor:pointer'}"
+                    ${sinStock ? '' : `onclick="elegirProducto('${p.id_producto}')"`}>
+                    <td class="fw-semibold">${esc(p.nombre)}</td>
+                    <td class="text-center">${esc(talle)}</td>
+                    <td class="text-center">${badgeStock}</td>
+                    <td class="text-end">$${parseFloat(p.precio).toFixed(2)}</td>
+                    <td class="text-center">${badgePromo}</td>
+                </tr>`;
+    }).join('');
+}
+
+function elegirProducto(idProducto) {
+    const p = productosData.find(x => x.id_producto == idProducto);
+    if (!p || filaActual === null) return;
+    seleccionarProducto(filaActual, p);
+    modalProductos.hide();
+}
+
+// Buscador: filtra mientras se escribe, Enter elige el primero con stock
+const buscador = document.getElementById('buscador_productos');
+buscador.addEventListener('input', () => renderLista(buscador.value));
+buscador.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const primero = ultimaLista.find(p => parseInt(p.stock_actual ?? 0) > 0);
+        if (primero) elegirProducto(primero.id_producto);
+    }
+});
+document.getElementById('modalProductos').addEventListener('shown.bs.modal', () => buscador.focus());
+
+// ---------- Aplicar el producto elegido a la fila ----------
+function seleccionarProducto(idx, p) {
+    const precio = parseFloat(p.precio || 0);
+    const stock  = parseInt(p.stock_actual ?? 0);
+    const talle  = p.talle ? p.talle : '—';
+
+    document.getElementById(`prod_${idx}`).value               = p.id_producto;
+    document.getElementById(`precio_${idx}`).value             = precio;
+    document.getElementById(`nombre_${idx}`).value             = p.nombre;
+    document.getElementById(`talle_${idx}`).textContent        = talle;
+    document.getElementById(`stock_${idx}`).textContent        = stock;
+    document.getElementById(`precio_label_${idx}`).textContent = '$' + precio.toFixed(2);
+
+    const cant = document.getElementById(`cant_${idx}`);
+    cant.max   = stock;
+    cant.value = 1;
+
+    const btn = document.getElementById(`btn_prod_${idx}`);
+    btn.className = 'btn btn-outline-dark btn-sm w-100 text-start';
+    btn.innerHTML = `<i class="bi bi-pencil-square"></i> ${esc(p.nombre)}`;
+
+    // Promoción
+    const promo        = promosPorProducto[p.id_producto];
+    const toggleDiv    = document.getElementById(`promo_toggle_${idx}`);
+    const labelDiv     = document.getElementById(`promo_label_${idx}`);
+    const chk          = document.getElementById(`chk_promo_${idx}`);
+    const hiddenAplica = document.getElementById(`aplica_promo_${idx}`);
 
     if (promo) {
-        const texto = promo.tipo_descuento === 'porcentaje'
-            ? `-${promo.descuento_porcentaje}%`
-            : `-$${parseFloat(promo.monto_fijo).toFixed(2)}`;
-        toggleDiv.style.display = 'flex';
-        labelDiv.textContent    = `${promo.nombre} (${texto})`;
-        chk.checked             = true;   // por defecto viene activada
-        hiddenAplica.value      = '1';
+        toggleDiv.classList.remove('d-none');
+        labelDiv.textContent = `${promo.nombre} (${textoPromo(promo)})`;
     } else {
-        toggleDiv.style.display = 'none';
-        labelDiv.textContent    = '';
-        hiddenAplica.value      = '1';    // no afecta: no hay promo para este producto
+        toggleDiv.classList.add('d-none');
+        labelDiv.textContent = '';
     }
+    chk.checked        = false;   // por defecto la promo viene DESACTIVADA
+    hiddenAplica.value = '0';
 
     calcularFila(idx);
 }
 
+// =====================================================
+//  CÁLCULOS
+// =====================================================
 function calcularFila(idx) {
     const cant    = parseFloat(document.getElementById(`cant_${idx}`)?.value || 0);
     const precio  = parseFloat(document.getElementById(`precio_${idx}`)?.value || 0);
@@ -215,8 +472,7 @@ function calcularFila(idx) {
 
     let subtotal = cant * precio;
 
-    const selEl   = document.querySelector(`tr[data-idx="${idx}"] select[name="producto_id[]"]`);
-    const idProducto = selEl ? selEl.value : null;
+    const idProducto = document.getElementById(`prod_${idx}`)?.value || null;
     const promo   = idProducto ? promosPorProducto[idProducto] : null;
     const aplica  = document.getElementById(`aplica_promo_${idx}`)?.value === '1';
 
@@ -239,9 +495,17 @@ function calcularTotal() {
     document.getElementById('label_total').textContent = '$' + total.toFixed(2);
 }
 
+// ---------- Validación al confirmar ----------
+document.getElementById('form_venta').addEventListener('submit', e => {
+    const ids = document.querySelectorAll('input[name="producto_id[]"]');
+    if (!ids.length || [...ids].some(i => !i.value)) {
+        e.preventDefault();
+        alert('Seleccioná un producto en cada fila (o eliminá las filas vacías).');
+    }
+});
+
 agregarFila();
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

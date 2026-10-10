@@ -16,9 +16,15 @@
         <h1 class="mb-0">
             <i class="bi bi-shop"></i> GamaStore
         </h1>
-        <a href="index.php?action=logout" class="btn btn-outline-danger btn-sm">
-            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-        </a>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAyuda">
+                <i class="bi bi-question-circle"></i> Ayuda
+            </button>
+            <a href="index.php?action=logout" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+            </a>
+        </div>
     </div>
 
     <?php if (isset($_GET['msg']) && $_GET['msg'] === 'acceso_denegado'): ?>
@@ -190,7 +196,148 @@
     </div>
 
 </div>
+<!--AYUDA -->
+<div class="modal fade" id="modalAyuda" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-question-circle"></i> Ayuda - GamaStore</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Seleccioná una pregunta para ver la respuesta paso a paso.</p>
 
+                <div class="accordion" id="acordeonAyuda">
+
+                    <!-- 1. PRODUCTO -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#ayudaProducto">
+                                <i class="bi bi-box-seam text-success me-2"></i> ¿Cómo se registra un producto?
+                            </button>
+                        </h2>
+                        <div id="ayudaProducto" class="accordion-collapse collapse show" data-bs-parent="#acordeonAyuda">
+                            <div class="accordion-body">
+                                <ol class="mb-2">
+                                    <li>En el panel principal, hacé clic en <strong>Ir a Productos</strong>.</li>
+                                    <li>Presioná el botón verde de arriba a la derecha para dar de alta un producto nuevo.</li>
+                                    <li>Completá el formulario:
+                                        <ul>
+                                            <li><strong>Nombre del producto</strong></li>
+                                            <li><strong>Tipo de zapatilla</strong></li>
+                                            <li><strong>Descripción</strong></li>
+                                            <li><strong>Precio</strong></li>
+                                            <li><strong>Talle, Color, Marca y Categoría</strong> (se eligen de las listas desplegables)</li>
+                                        </ul>
+                                    </li>
+                                    <li>Presioná el botón verde de guardar. El producto aparecerá en el listado.</li>
+                                </ol>
+                                <div class="alert alert-info py-2 mb-0">
+                                    <i class="bi bi-info-circle"></i> Si no encontrás una marca o categoría en las listas, primero cargala desde el módulo <strong>Configuraciones</strong>.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. CLIENTE -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ayudaCliente">
+                                <i class="bi bi-people-fill text-primary me-2"></i> ¿Cómo se registra un cliente?
+                            </button>
+                        </h2>
+                        <div id="ayudaCliente" class="accordion-collapse collapse" data-bs-parent="#acordeonAyuda">
+                            <div class="accordion-body">
+                                <ol class="mb-2">
+                                    <li>En el panel principal, hacé clic en <strong>Ir a Clientes</strong>.</li>
+                                    <li>Presioná el botón verde de arriba a la derecha para crear un cliente nuevo.</li>
+                                    <li>Completá los datos:
+                                        <ul>
+                                            <li><strong>Nombre</strong> y <strong>Apellido</strong></li>
+                                            <li><strong>DNI</strong></li>
+                                            <li><strong>Teléfono</strong></li>
+                                            <li><strong>Email</strong></li>
+                                        </ul>
+                                    </li>
+                                    <li>Presioná el botón verde de guardar. El cliente aparecerá en el listado con su fecha de registro.</li>
+                                </ol>
+                                <div class="alert alert-info py-2 mb-0">
+                                    <i class="bi bi-info-circle"></i> Para buscar un cliente ya registrado, usá el buscador del listado.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. VENTA -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ayudaVenta">
+                                <i class="bi bi-cart-check text-info me-2"></i> ¿Cómo se realiza una venta?
+                            </button>
+                        </h2>
+                        <div id="ayudaVenta" class="accordion-collapse collapse" data-bs-parent="#acordeonAyuda">
+                            <div class="accordion-body">
+                                <ol class="mb-2">
+                                    <li>En el panel principal, hacé clic en <strong>Ir a Ventas</strong>.</li>
+                                    <li>Presioná el botón verde de arriba a la derecha para crear una <strong>Nueva Venta</strong>.</li>
+                                    <li>En <strong>Cliente</strong>, abrí el selector y elegí el cliente (el cliente debe estar registrado previamente).</li>
+                                    <li>Elegí el <strong>Método de Pago</strong>: Efectivo, Tarjeta Débito, Tarjeta Crédito o Transferencia.</li>
+                                    <li>En la tabla de productos, seleccioná cada <strong>Producto</strong> (se muestra su talle, stock y precio) e indicá la <strong>cantidad</strong>.</li>
+                                    <li>Si el producto tiene una promoción vigente, podés aplicarla en la columna <strong>Promoción</strong>.</li>
+                                    <li>Usá el botón <strong>Agregar</strong> para sumar más productos a la venta.</li>
+                                    <li>Revisá el total y presioná el botón verde para confirmar la venta.</li>
+                                </ol>
+                                <div class="alert alert-warning py-2 mb-0">
+                                    <i class="bi bi-exclamation-triangle"></i> Podes ver las ventas canceladas (si la cancelas) alado del boton nueva venta, Y tambien Podes buscar una compra que haya echo un cliente .
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. PROMOCION -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ayudaPromo">
+                                <i class="bi bi-tags-fill text-primary me-2"></i> ¿Cómo se crea una promoción?
+                            </button>
+                        </h2>
+                        <div id="ayudaPromo" class="accordion-collapse collapse" data-bs-parent="#acordeonAyuda">
+                            <div class="accordion-body">
+                                <ol class="mb-2">
+                                    <li>En el panel principal, hacé clic en <strong>Ir a Promociones</strong>.</li>
+                                    <li>Presioná el botón verde de arriba a la derecha para crear una <strong>Nueva Promoción</strong>.</li>
+                                    <li>Completá los datos generales:
+                                        <ul>
+                                            <li><strong>Nombre de la promoción</strong></li>
+                                            <li><strong>Descripción / motivo</strong></li>
+                                            <li><strong>Tipo de descuento:</strong> Porcentaje (%) o Monto fijo ($)</li>
+                                            <li><strong>Valor del descuento</strong></li>
+                                            <li><strong>Fecha de inicio</strong> y <strong>Fecha de fin</strong></li>
+                                        </ul>
+                                    </li>
+                                    <li>En <strong>Ámbito de aplicación</strong> elegí a qué se aplica:
+                                        <ul>
+                                            <li><strong>Productos específicos:</strong> tildá los productos que querés incluir.</li>
+                                            <li><strong>Toda una categoría:</strong> seleccioná la categoría completa.</li>
+                                        </ul>
+                                    </li>
+                                    <li>Presioná el botón verde de guardar.</li>
+                                </ol>
+                                <div class="alert alert-info py-2 mb-0">
+                                    <i class="bi bi-info-circle"></i> Desde el listado de promociones podés editarlas, desactivarlas o reactivarlas cuando quieras.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
