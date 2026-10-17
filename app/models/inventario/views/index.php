@@ -17,9 +17,7 @@
             <a href="index.php?action=dashboard" class="btn btn-outline-secondary btn-sm me-2">
                 <i class="bi bi-arrow-left"></i> Volver
             </a>
-            <a href="index.php?action=inventario_crear" class="btn btn-success btn-sm">
-                <i class="bi bi-plus-lg"></i> Nueva fila de inventario
-            </a>
+            
         </div>
     </div>
 

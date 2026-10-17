@@ -19,7 +19,7 @@ class Inventario {
                 LEFT JOIN talle t ON p.talle_id_talle = t.id_talle
                 LEFT JOIN color c ON p.color_id_color = c.id_color
                 WHERE i.activo = 1
-                ORDER BY p.nombre ASC
+                ORDER BY p.nombre DESC
                 LIMIT :limite OFFSET :offset";
 
         $stmt = $this->conn->prepare($sql);
