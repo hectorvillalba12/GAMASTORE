@@ -11,9 +11,10 @@ class ReporteController {
     }
 
     // Helper: toma el rango de fechas del GET, o usa "últimos 30 días" por defecto
+    // (también si vienen vacías, que es lo que pasa al exportar sin haber filtrado)
     private function obtenerRango() {
-        $hasta = $_GET['hasta'] ?? date('Y-m-d');
-        $desde = $_GET['desde'] ?? date('Y-m-d', strtotime('-30 days'));
+        $hasta = !empty($_GET['hasta']) ? $_GET['hasta'] : date('Y-m-d');
+        $desde = !empty($_GET['desde']) ? $_GET['desde'] : date('Y-m-d', strtotime('-30 days'));
         return [$desde, $hasta];
     }
 
@@ -72,53 +73,127 @@ class ReporteController {
         require __DIR__ . '/views/promociones.php';
     }
 
-    // Exporta a Excel el reporte que se esté viendo (mismo patrón que ya usás en Productos)
+    // Exporta a Excel (.xlsx real) el reporte que se esté viendo
     public function exportExcel() {
         Auth::verificarModulo('reportes');
         [$desde, $hasta] = $this->obtenerRango();
+
+        $tiposValidos = ['ventas', 'productos', 'stock', 'clientes', 'promociones'];
         $tipo = $_GET['tipo'] ?? 'ventas';
+        if (!in_array($tipo, $tiposValidos, true)) {
+            $tipo = 'ventas';
+        }
 
-        header("Content-Type: application/vnd.ms-excel");
-        header("Content-Disposition: attachment; filename=reporte_{$tipo}.xls");
-
+        // Cada reporte define: nombre de hoja, encabezados, tipo de cada columna y filas
+        // Tipos de columna: 't' = texto, 'n' = número entero, 'm' = dinero
         switch ($tipo) {
             case 'productos':
-                echo "Producto\tUnidades vendidas\tTotal facturado\n";
+                $hoja = 'Productos';
+                $encabezados = ['Producto', 'Unidades vendidas', 'Total facturado'];
+                $tipos = ['t', 'n', 'm'];
+                $filas = [];
                 foreach ($this->reporte->productosMasVendidos($desde, $hasta, 1000) as $p) {
-                    echo "{$p['nombre']}\t{$p['unidades_vendidas']}\t{$p['total_facturado']}\n";
+                    $filas[] = [$p['nombre'], $p['unidades_vendidas'], $p['total_facturado']];
                 }
                 break;
 
             case 'stock':
-                echo "Producto\tCategoría\tStock actual\tStock mínimo\n";
+                $hoja = 'Stock';
+                $encabezados = ['Producto', 'Categoría', 'Stock actual', 'Stock mínimo'];
+                $tipos = ['t', 't', 'n', 'n'];
+                $filas = [];
                 foreach ($this->reporte->stockBajo() as $p) {
-                    echo "{$p['nombre']}\t{$p['categoria']}\t{$p['stock_actual']}\t{$p['stock_minimo']}\n";
+                    $filas[] = [$p['nombre'], $p['categoria'], $p['stock_actual'], $p['stock_minimo']];
                 }
                 break;
 
             case 'clientes':
-                echo "Cliente\tCantidad de compras\tTotal comprado\n";
+                $hoja = 'Clientes';
+                $encabezados = ['Cliente', 'Cantidad de compras', 'Total comprado'];
+                $tipos = ['t', 'n', 'm'];
+                $filas = [];
                 foreach ($this->reporte->clientesFrecuentes($desde, $hasta, 1000) as $c) {
-                    echo "{$c['nombre_cliente']}\t{$c['cantidad_compras']}\t{$c['total_comprado']}\n";
+                    $filas[] = [$c['nombre_cliente'], $c['cantidad_compras'], $c['total_comprado']];
                 }
                 break;
 
             case 'promociones':
-                echo "Promoción\tVeces aplicada\tDescuento total\n";
+                $hoja = 'Promociones';
+                $encabezados = ['Promoción', 'Veces aplicada', 'Descuento total'];
+                $tipos = ['t', 'n', 'm'];
+                $filas = [];
                 foreach ($this->reporte->promocionesAplicadas($desde, $hasta) as $p) {
-                    echo "{$p['nombre']}\t{$p['veces_aplicada']}\t{$p['descuento_total']}\n";
+                    $filas[] = [$p['nombre'], $p['veces_aplicada'], $p['descuento_total']];
                 }
                 break;
 
             default: // ventas
-                echo "Período\tCantidad de ventas\tTotal\n";
+                $hoja = 'Ventas';
+                $encabezados = ['Período', 'Cantidad de ventas', 'Total'];
+                $tipos = ['t', 'n', 'm'];
+                $filas = [];
                 foreach ($this->reporte->ventasPorPeriodo($desde, $hasta, $_GET['agrupacion'] ?? 'dia') as $v) {
-                    echo "{$v['periodo']}\t{$v['cantidad_ventas']}\t{$v['total']}\n";
+                    $filas[] = [$v['periodo'], $v['cantidad_ventas'], $v['total']];
                 }
         }
+
+        require_once __DIR__ . '/../../../vendor/autoload.php';
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle($hoja);
+
+        $texto = \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING;
+        $numero = \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC;
+
+        // Encabezados
+        foreach ($encabezados as $i => $titulo) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+            $sheet->setCellValueExplicit($col . '1', $titulo, $texto);
+        }
+        $ultimaCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($encabezados));
+        $sheet->getStyle("A1:{$ultimaCol}1")->getFont()->setBold(true);
+        $sheet->getStyle("A1:{$ultimaCol}1")->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setARGB('FFE9ECEF');
+
+        // Filas de datos
+        $fila = 2;
+        foreach ($filas as $datos) {
+            foreach ($datos as $i => $valor) {
+                $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+                $celda = $col . $fila;
+
+                if ($tipos[$i] === 't') {
+                    $sheet->setCellValueExplicit($celda, (string)$valor, $texto);
+                } else {
+                    $sheet->setCellValueExplicit($celda, (float)$valor, $numero);
+                    $sheet->getStyle($celda)->getNumberFormat()
+                        ->setFormatCode($tipos[$i] === 'm' ? '#,##0.00' : '0');
+                }
+            }
+            $fila++;
+        }
+
+        // Ancho de columnas automático
+        foreach (range(1, count($encabezados)) as $i) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Limpia cualquier salida previa (espacios, BOM, warnings) que corrompería el archivo
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=\"reporte_{$tipo}.xlsx\"");
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
         exit();
     }
-
     // Recibe las imágenes de los gráficos (capturadas en el navegador) y arma un Excel real con PhpSpreadsheet
     public function exportGraficosExcel() {
         Auth::verificarModulo('reportes');

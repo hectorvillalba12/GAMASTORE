@@ -47,4 +47,26 @@ class Configuracion {
         $stmt->execute(['nombre' => $nombre]);
         return $this->conn->lastInsertId();
     }
+    // ===================== TALLES =====================
+
+    public function listarTalles() {
+        // Orden numérico: 35, 36, ... 45 (y los que no son número, al final)
+        $sql = "SELECT * FROM talle
+                ORDER BY (talles_disponibles + 0) ASC, talles_disponibles ASC";
+        return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function existeTalle($nombre) {
+        $sql = "SELECT COUNT(*) FROM talle WHERE talles_disponibles = :nombre";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute(['nombre' => $nombre]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    public function crearTalle($nombre) {
+        $sql = "INSERT INTO talle (talles_disponibles) VALUES (:nombre)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute(['nombre' => $nombre]);
+        return $this->conn->lastInsertId();
+    }
 }

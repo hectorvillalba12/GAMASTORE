@@ -1,90 +1,111 @@
+<?php $error = $_GET['error'] ?? ''; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Inventario - GamaStore</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editar Inventario | GamaStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<link href="css/gamastore.css" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">
-                        <i class="bi bi-pencil-square"></i>
-                        Editar Inventario — <?= htmlspecialchars($item['nombre_producto']) ?>
-                    </h5>
-                </div>
-                <div class="card-body">
+<?php require __DIR__ . '/../../../ayudantes/navbar.php'; ?>
 
-                    <?php if (isset($_GET['error']) && $_GET['error'] === 'stock_invalido'): ?>
-                        <div class="alert alert-danger">
-                            El stock máximo no puede ser menor al stock mínimo.
-                        </div>
-                    <?php endif; ?>
+<main class="wrap estrecho">
 
-                    <div class="alert alert-info small">
-                        <i class="bi bi-info-circle"></i>
-                        Si modificás el "Stock Actual" acá, queda registrado como un <strong>ajuste manual</strong> en el historial.
-                        Para entradas o salidas normales, usá los botones correspondientes desde el listado.
-                    </div>
-
-                    <form action="index.php?action=inventario_actualizar" method="POST">
-
-                        <input type="hidden" name="id_inventario"        value="<?= $item['id_inventario'] ?>">
-                        <input type="hidden" name="producto_id_producto" value="<?= $item['producto_id_producto'] ?>">
-
-                        <div class="mb-3">
-                            <label class="form-label text-muted">Producto</label>
-                            <input type="text" class="form-control"
-                                value="<?= htmlspecialchars($item['nombre_producto']) ?>" disabled>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Ubicación</label>
-                            <input type="text" name="ubicacion" class="form-control"
-                                value="<?= htmlspecialchars($item['ubicacion'] ?? '') ?>"
-                                placeholder="Ej: Estante A3">
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Stock Actual</label>
-                                <input type="number" name="stock_actual" class="form-control"
-                                    value="<?= $item['stock_actual'] ?>" min="0" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Stock Mínimo</label>
-                                <input type="number" name="stock_minimo" class="form-control"
-                                    value="<?= $item['stock_minimo'] ?>" min="0" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Stock Máximo</label>
-                                <input type="number" name="stock_maximo" class="form-control"
-                                    value="<?= $item['stock_maximo'] ?>" min="0" required>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between">
-                            <a href="index.php?action=inventario" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-save"></i> Guardar cambios
-                            </button>
-                        </div>
-
-                    </form>
-                </div>
-            </div>
+    <div class="page-head">
+        <div>
+            <div class="page-label">Inventario</div>
+            <h1 class="page-titulo"><i class="bi bi-pencil-square"></i> Editar inventario</h1>
+            <p class="page-sub"><strong><?= htmlspecialchars($item['nombre_producto']) ?></strong></p>
+        </div>
+        <div class="page-btns">
+            <a href="index.php?action=inventario" class="btn btn-ghost"><i class="bi bi-arrow-left"></i> Volver</a>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <?php if ($error === 'stock_invalido'): ?>
+        <div class="alerta danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> El stock máximo no puede ser menor al stock mínimo.
+            <button type="button" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+    <?php endif; ?>
+
+    <div class="aviso">
+        <i class="bi bi-info-circle"></i>
+        <div>
+            Si modificás el "Stock actual" acá, queda registrado como un <strong>ajuste manual</strong> en el historial.
+            Para entradas o salidas normales, usá los botones correspondientes desde el listado.
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-body">
+            <form action="index.php?action=inventario_actualizar" method="POST">
+
+                <input type="hidden" name="id_inventario"        value="<?= $item['id_inventario'] ?>">
+                <input type="hidden" name="producto_id_producto" value="<?= $item['producto_id_producto'] ?>">
+
+                <div class="form-grid">
+
+                    <div class="campo col-3">
+                        <label>Producto</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-box-seam icono"></i>
+                            <input type="text" value="<?= htmlspecialchars($item['nombre_producto'] . ' — talle ' . ($item['talle'] ?? '-')) ?>" disabled>
+                        </div>
+                    </div>
+
+                    <div class="campo col-3">
+                        <label for="ubicacion">Ubicación</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-geo-alt icono"></i>
+                            <input type="text" id="ubicacion" name="ubicacion" placeholder="Ej: Estante A3"
+                                   value="<?= htmlspecialchars($item['ubicacion'] ?? '') ?>">
+                        </div>
+                    </div>
+
+                    <div class="campo col-2">
+                        <label for="stock_actual">Stock actual</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-stack icono"></i>
+                            <input type="number" id="stock_actual" name="stock_actual" min="0" required
+                                   value="<?= $item['stock_actual'] ?>">
+                        </div>
+                    </div>
+
+                    <div class="campo col-2">
+                        <label for="stock_minimo">Stock mínimo</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-arrow-down-circle icono"></i>
+                            <input type="number" id="stock_minimo" name="stock_minimo" min="0" required
+                                   value="<?= $item['stock_minimo'] ?>">
+                        </div>
+                    </div>
+
+                    <div class="campo col-2">
+                        <label for="stock_maximo">Stock máximo</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-arrow-up-circle icono"></i>
+                            <input type="number" id="stock_maximo" name="stock_maximo" min="0" required
+                                   value="<?= $item['stock_maximo'] ?>">
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="form-acciones">
+                    <button type="submit" class="btn btn-main"><i class="bi bi-save"></i> Guardar cambios</button>
+                    <a href="index.php?action=inventario" class="btn btn-ghost">Cancelar</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</main>
+
 </body>
 </html>

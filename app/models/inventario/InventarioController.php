@@ -1,13 +1,15 @@
 <?php
 require_once __DIR__ . '/inventario.php';
-
+require_once __DIR__ . '/../proveedor/proveedor.php';
 class InventarioController {
 
     private $inventario;
+    private $proveedor;
 
     public function __construct() {
         $db = (new Database())->connect();
         $this->inventario = new Inventario($db);
+        $this->proveedor = new Proveedor($db);
     }
 
     // Helper para obtener el id del usuario logueado (queda registrado en cada movimiento)
@@ -18,9 +20,20 @@ class InventarioController {
     public function index() {
         Auth::verificarModulo('inventario');
 
+        // FILTROS
+        $filtroBuscar = trim($_GET['buscar'] ?? '');
+        $filtroTalle  = $_GET['talle'] ?? '';
+        $filtroEstado = $_GET['estado'] ?? '';
+        if (!in_array($filtroEstado, ['bajo', 'normal', 'sobre'], true)) {
+            $filtroEstado = '';
+        }
+
+        $db     = (new Database())->connect();
+        $talles = $db->query("SELECT * FROM talle ORDER BY talles_disponibles ASC")->fetchAll(PDO::FETCH_ASSOC);
+
         // PAGINACIÓN
         $porPagina        = 10;
-        $totalInventarios = $this->inventario->contar();
+        $totalInventarios = $this->inventario->contar($filtroBuscar, $filtroTalle, $filtroEstado);
         $totalPaginas     = max(1, (int)ceil($totalInventarios / $porPagina));
 
         $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
@@ -32,7 +45,9 @@ class InventarioController {
         $desde = $totalInventarios > 0 ? $offset + 1 : 0;
         $hasta = min($offset + $porPagina, $totalInventarios);
 
-        $inventarios          = $this->inventario->listar($porPagina, $offset);
+        $hayFiltros = ($filtroBuscar !== '' || !empty($filtroTalle) || $filtroEstado !== '');
+
+        $inventarios          = $this->inventario->listar($porPagina, $offset, $filtroBuscar, $filtroTalle, $filtroEstado);
         $inventariosInactivos = $this->inventario->listarInactivos();
         $stockBajo            = $this->inventario->contarStockBajo();
 
@@ -61,14 +76,11 @@ class InventarioController {
             exit();
         }
 
-        if ($data['stock_maximo'] > 0 && $data['stock_maximo'] < $data['stock_minimo']) {
-            header("Location: index.php?action=inventario_crear&error=stock_invalido");
+        // Un producto solo puede tener UNA fila de inventario activa
+        if ($this->inventario->productoTieneFilaActiva($data['producto_id_producto'], 0)) {
+            header("Location: index.php?action=inventario_crear&error=producto_duplicado");
             exit();
         }
-
-        $this->inventario->crear($data, $this->usuarioActualId());
-        header("Location: index.php?action=inventario&ok=1");
-        exit();
     }
 
     public function edit() {
@@ -91,9 +103,9 @@ class InventarioController {
             'id_inventario'         => $_POST['id_inventario'],
             'producto_id_producto'  => $_POST['producto_id_producto'],
             'ubicacion'             => trim($_POST['ubicacion'] ?? ''),
-            'stock_actual'          => (int)($_POST['stock_actual'] ?? 0),
-            'stock_minimo'          => (int)($_POST['stock_minimo'] ?? 0),
-            'stock_maximo'          => (int)($_POST['stock_maximo'] ?? 0),
+            'stock_actual'          => max(0, (int)($_POST['stock_actual'] ?? 0)),
+            'stock_minimo'          => max(0, (int)($_POST['stock_minimo'] ?? 0)),
+            'stock_maximo'          => max(0, (int)($_POST['stock_maximo'] ?? 0)),
         ];
 
         // Validación: el máximo no puede ser menor al mínimo (ya la vista mostraba este error, faltaba generarlo)
@@ -106,8 +118,7 @@ class InventarioController {
         header("Location: index.php?action=inventario&ok=1");
         exit();
     }
-
-    // FORM de entrada de stock (ej: llegada de mercadería)
+    // FORM de entrada de stock (llegada de mercadería)
     public function entradaForm() {
         Auth::verificarModulo('inventario');
         $id   = $_GET['id'];
@@ -118,18 +129,32 @@ class InventarioController {
             exit();
         }
 
+        $proveedores = $this->proveedor->listarActivos();
+
         require __DIR__ . '/views/entrada.php';
     }
 
     public function entradaGuardar() {
         Auth::verificarModulo('inventario');
 
-        $id       = $_POST['id_inventario'];
-        $cantidad = (int)($_POST['cantidad'] ?? 0);
-        $motivo   = trim($_POST['motivo'] ?? '');
+        $id          = $_POST['id_inventario'];
+        $cantidad    = (int)($_POST['cantidad'] ?? 0);
+        $motivo      = trim($_POST['motivo'] ?? '');
+        $idProveedor = (int)($_POST['id_proveedor'] ?? 0);
 
         if ($cantidad <= 0) {
             header("Location: index.php?action=inventario_entrada&id={$id}&error=cantidad_invalida");
+            exit();
+        }
+
+        if ($idProveedor <= 0) {
+            header("Location: index.php?action=inventario_entrada&id={$id}&error=proveedor_requerido");
+            exit();
+        }
+
+        // El proveedor tiene que existir
+        if (!$this->proveedor->obtener($idProveedor)) {
+            header("Location: index.php?action=inventario_entrada&id={$id}&error=proveedor_invalido");
             exit();
         }
 
@@ -138,12 +163,15 @@ class InventarioController {
             exit();
         }
 
-        $this->inventario->entrada($id, $cantidad, $motivo, $this->usuarioActualId());
+        if (!$this->inventario->entrada($id, $cantidad, $motivo, $this->usuarioActualId(), $idProveedor)) {
+            header("Location: index.php?action=inventario");
+            exit();
+        }
         header("Location: index.php?action=inventario&ok=entrada");
         exit();
     }
 
-    // FORM de salida manual de stock (ej: producto dañado, devolución a proveedor)
+    // FORM de salida manual de stock
     public function salidaForm() {
         Auth::verificarModulo('inventario');
         $id   = $_GET['id'];
@@ -154,15 +182,25 @@ class InventarioController {
             exit();
         }
 
+        $proveedores = $this->inventario->proveedoresConEntrada($id);
+
         require __DIR__ . '/views/salida.php';
     }
 
     public function salidaGuardar() {
         Auth::verificarModulo('inventario');
 
-        $id       = $_POST['id_inventario'];
-        $cantidad = (int)($_POST['cantidad'] ?? 0);
-        $motivo   = trim($_POST['motivo'] ?? '');
+        $id          = $_POST['id_inventario'];
+        $cantidad    = (int)($_POST['cantidad'] ?? 0);
+        $motivo      = trim($_POST['motivo'] ?? '');
+        $idProveedor = (int)($_POST['id_proveedor'] ?? 0);
+        $enviarMail  = isset($_POST['enviar_correo']);
+
+        $item = $this->inventario->obtener($id);
+        if (!$item) {
+            header("Location: index.php?action=inventario");
+            exit();
+        }
 
         if ($cantidad <= 0) {
             header("Location: index.php?action=inventario_salida&id={$id}&error=cantidad_invalida");
@@ -174,15 +212,86 @@ class InventarioController {
             exit();
         }
 
-        $resultado = $this->inventario->salida($id, $cantidad, $motivo, $this->usuarioActualId());
+        // La columna motivo admite hasta 500 caracteres
+        if (mb_strlen($motivo) > 500) {
+            header("Location: index.php?action=inventario_salida&id={$id}&error=motivo_largo");
+            exit();
+        }
+
+        // El proveedor es opcional, pero si se elige tiene que existir
+        // y tiene que ser uno que hizo la ENTRADA de este producto
+        $proveedor = null;
+        if ($idProveedor > 0) {
+            $proveedor = $this->proveedor->obtener($idProveedor);
+            if (!$proveedor) {
+                header("Location: index.php?action=inventario_salida&id={$id}&error=proveedor_invalido");
+                exit();
+            }
+
+            if (!$this->inventario->proveedorTuvoEntrada($id, $idProveedor)) {
+                header("Location: index.php?action=inventario_salida&id={$id}&error=proveedor_no_corresponde");
+                exit();
+            }
+        }
+
+        // Para mandar el correo hace falta proveedor con email cargado
+        if ($enviarMail) {
+            if (!$proveedor) {
+                header("Location: index.php?action=inventario_salida&id={$id}&error=proveedor_requerido");
+                exit();
+            }
+            if (empty($proveedor['email'])) {
+                header("Location: index.php?action=inventario_salida&id={$id}&error=proveedor_sin_email");
+                exit();
+            }
+        }
+
+        $resultado = $this->inventario->salida($id, $cantidad, $motivo, $this->usuarioActualId(), $proveedor ? $idProveedor : null);
 
         if (!$resultado['ok']) {
             header("Location: index.php?action=inventario_salida&id={$id}&error=" . $resultado['error']);
             exit();
         }
 
+        // La salida ya quedó registrada. Si falla el correo NO se revierte: solo se avisa.
+        if ($enviarMail) {
+            $enviado = $this->enviarCorreoSalida($proveedor, $item, $cantidad, $motivo, $resultado['stock_nuevo']);
+            header("Location: index.php?action=inventario&ok=salida&correo=" . ($enviado ? '1' : '0'));
+            exit();
+        }
+
         header("Location: index.php?action=inventario&ok=salida");
         exit();
+    }
+
+    // Arma y envía al proveedor el motivo de la salida
+    private function enviarCorreoSalida($proveedor, $item, $cantidad, $motivo, $stockNuevo) {
+        $producto = htmlspecialchars($item['nombre_producto'] ?? '');
+        $nombre   = htmlspecialchars($proveedor['nombre']);
+        $motivoHtml = nl2br(htmlspecialchars($motivo));
+        $usuario  = htmlspecialchars($_SESSION['usuario']['email'] ?? '');
+        $fecha    = date('d/m/Y H:i');
+
+        $html = "
+            <h3>Hola {$nombre},</h3>
+            <p>Te informamos de una salida de mercadería registrada en <strong>GamaStore</strong>:</p>
+            <ul>
+                <li><strong>Producto:</strong> {$producto}</li>
+                <li><strong>Cantidad:</strong> {$cantidad}</li>
+                <li><strong>Fecha:</strong> {$fecha}</li>
+            </ul>
+            <p><strong>Motivo:</strong></p>
+            <blockquote style='border-left:3px solid #a855f7;margin:0;padding:6px 12px;color:#333;'>{$motivoHtml}</blockquote>
+            <br>
+            <p style='color:#888;font-size:13px;'>Registrado por {$usuario}. Ante cualquier consulta, respondé a este correo.</p>
+        ";
+
+        return Correo::enviar(
+            $proveedor['email'],
+            $proveedor['nombre'],
+            'GamaStore - Salida de producto: ' . ($item['nombre_producto'] ?? ''),
+            $html
+        );
     }
 
     // HISTORIAL de movimientos de una fila de inventario

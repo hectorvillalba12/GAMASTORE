@@ -1,199 +1,212 @@
+<?php
+$errores = [
+    'sin_productos'      => 'Agregá al menos un producto a la venta.',
+    'stock_insuficiente' => 'Uno de los productos seleccionados no tiene stock suficiente.',
+    'error_al_guardar'   => 'Ocurrió un error al registrar la venta. Intentá de nuevo.',
+    'cliente_requerido'  => 'Seleccioná un cliente registrado para realizar la venta.',
+    'cliente_invalido'   => 'El cliente seleccionado no existe o está dado de baja.',
+];
+$error = $_GET['error'] ?? '';
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Nueva Venta - GamaStore</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nueva Venta | GamaStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<link href="css/gamastore.css" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-cart-plus"></i> Nueva Venta</h2>
-        <a href="index.php?action=ventas" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> Volver
-        </a>
+<?php require __DIR__ . '/../../../ayudantes/navbar.php'; ?>
+
+<main class="wrap">
+
+    <div class="page-head">
+        <div>
+            <div class="page-label">Ventas</div>
+            <h1 class="page-titulo"><i class="bi bi-cart-plus"></i> Nueva venta</h1>
+            <p class="page-sub">Elegí el cliente, el método de pago y los productos.</p>
+        </div>
+        <div class="page-btns">
+            <a href="index.php?action=ventas" class="btn btn-ghost"><i class="bi bi-arrow-left"></i> Volver</a>
+        </div>
     </div>
-    <?php
-    $errores = [
-        'sin_productos'      => 'Agregá al menos un producto a la venta.',
-        'stock_insuficiente' => 'Uno de los productos seleccionados no tiene stock suficiente.',
-        'error_al_guardar'   => 'Ocurrió un error al registrar la venta. Intentá de nuevo.',
-    ];
-    if (isset($_GET['error']) && isset($errores[$_GET['error']])): ?>
-        <div class="alert alert-danger">
-            <i class="bi bi-exclamation-triangle-fill"></i> <?= $errores[$_GET['error']] ?>
+
+    <?php if (isset($errores[$error])): ?>
+        <div class="alerta danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> <?= $errores[$error] ?>
+            <button type="button" onclick="this.parentElement.remove()">&times;</button>
         </div>
     <?php endif; ?>
 
     <form action="index.php?action=ventas_guardar" method="POST" id="form_venta">
 
-        <div class="row g-4">
+        <div class="venta-grid">
 
             <!-- Datos generales -->
-            <div class="col-md-4">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header bg-success text-white">
-                        <strong><i class="bi bi-info-circle"></i> Datos de la Venta</strong>
-                    </div>
-                    <div class="card-body">
-
-                        <div class="mb-3">
-                            <label class="form-label">Cliente</label>
-                            <!-- Vacío = Consumidor final -->
-                            <input type="hidden" name="cliente_idcliente" id="cliente_id" value="">
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-outline-secondary text-start flex-grow-1"
-                                        id="btn_cliente" onclick="abrirSelectorCliente()">
-                                    <i class="bi bi-person"></i> Consumidor final
-                                </button>
-                                <button type="button" class="btn btn-outline-danger d-none"
-                                        id="btn_quitar_cliente" title="Volver a Consumidor final"
-                                        onclick="elegirCliente('')">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                            </div>
+            <div class="panel">
+                <div class="panel-head">
+                    <span><i class="bi bi-info-circle"></i> Datos de la venta</span>
+                </div>
+                <div class="panel-body">
+                    
+                    <div class="campo" style="margin-bottom:18px">
+                        <label>Cliente</label>
+                        <input type="hidden" name="cliente_idcliente" id="cliente_id" value="">
+                        <div class="cli-row">
+                            <button type="button" class="btn-select" id="btn_cliente" onclick="abrirSelectorCliente()">
+                                <i class="bi bi-person"></i> Seleccionar cliente
+                            </button>
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Método de Pago</label>
-                            <select name="metodo_de_pago" class="form-select" required>
-                                <option value="">-- Seleccionar --</option>
+                    <div class="campo">
+                        <label for="metodo_de_pago">Método de pago</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-credit-card icono"></i>
+                            <select id="metodo_de_pago" name="metodo_de_pago" required>
+                                <option value="">Seleccionar</option>
                                 <option value="Efectivo">Efectivo</option>
                                 <option value="Tarjeta Débito">Tarjeta Débito</option>
                                 <option value="Tarjeta Crédito">Tarjeta Crédito</option>
                                 <option value="Transferencia">Transferencia</option>
                             </select>
+                            <i class="bi bi-chevron-down flecha"></i>
                         </div>
-
-                        <hr>
-                        <div class="mb-1 d-flex justify-content-between fs-5 fw-bold text-success">
-                            <span>TOTAL:</span>
-                            <span id="label_total">$0.00</span>
-                        </div>
-
-                        <div class="mt-4">
-                            <button type="submit" class="btn btn-success w-100">
-                                <i class="bi bi-save"></i> Confirmar Venta
-                            </button>
-                        </div>
-
                     </div>
+
+                    <div class="total-box">
+                        <span>Total</span>
+                        <b id="label_total">$0.00</b>
+                    </div>
+
+                    <button type="submit" class="btn btn-main w100">
+                        <i class="bi bi-save"></i> Confirmar venta
+                    </button>
+
                 </div>
             </div>
 
             <!-- Productos -->
-            <div class="col-md-8">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                        <strong><i class="bi bi-box-seam"></i> Productos</strong>
-                        <button type="button" class="btn btn-sm btn-light" onclick="agregarFila(true)">
-                            <i class="bi bi-plus-lg"></i> Agregar producto
-                        </button>
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table mb-0">
-                            <thead class="table-secondary">
-                                <tr>
-                                    <th style="min-width:170px">Producto</th>
-                                    <th class="text-center" style="width:70px">Talle</th>
-                                    <th class="text-center" style="width:80px">Stock</th>
-                                    <th class="text-center" style="width:90px">Cant.</th>
-                                    <th class="text-end" style="width:110px">P. Unit.</th>
-                                    <th class="text-center" style="width:150px">Promoción</th>
-                                    <th class="text-end" style="width:110px">Subtotal</th>
-                                    <th style="width:50px"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="filas_productos"></tbody>
-                        </table>
-                    </div>
+            <div class="panel">
+                <div class="panel-head">
+                    <span><i class="bi bi-box-seam"></i> Productos</span>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="agregarFila(true)">
+                        <i class="bi bi-plus-lg"></i> Agregar producto
+                    </button>
+                </div>
+                <div class="tabla-wrap">
+                    <table class="tabla" style="min-width:820px">
+                        <thead>
+                            <tr>
+                                <th style="min-width:190px">Producto</th>
+                                <th class="centro">Talle</th>
+                                <th class="centro">Stock</th>
+                                <th class="centro">Cant.</th>
+                                <th class="der">P. Unit.</th>
+                                <th class="centro">Promoción</th>
+                                <th class="der">Subtotal</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="filas_productos"></tbody>
+                    </table>
                 </div>
             </div>
 
         </div>
     </form>
-</div>
+
+</main>
 
 <!-- MODAL: selector de clientes -->
-<div class="modal fade" id="modalClientes" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-person-lines-fill"></i> Seleccionar cliente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+<div class="overlay" id="modalClientes">
+    <div class="modal ancho medio" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <h2><i class="bi bi-person-lines-fill"></i> Seleccionar cliente</h2>
+            <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-buscar">
+            <div class="input-wrap">
+                <i class="bi bi-search icono"></i>
+                <input type="text" id="buscador_clientes" placeholder="Buscar por nombre, DNI o teléfono..." autocomplete="off">
             </div>
-            <div class="px-3 pt-3">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" id="buscador_clientes" class="form-control"
-                        placeholder="Buscar por nombre, DNI o teléfono..." autocomplete="off">
-                </div>
-                <div class="form-text">Tocá un cliente para elegirlo. Enter elige el primero de la lista.</div>
-            </div>
-            <div class="modal-body">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light sticky-top">
-                        <tr>
-                            <th>Cliente</th>
-                            <th style="width:140px">DNI</th>
-                            <th style="width:160px">Teléfono</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista_clientes"></tbody>
-                </table>
-            </div>
+            <small>Tocá un cliente para elegirlo. Enter elige el primero de la lista.</small>
+        </div>
+        <div class="modal-body scroll">
+            <table class="tabla" style="min-width:0">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>DNI</th>
+                        <th>Teléfono</th>
+                    </tr>
+                </thead>
+                <tbody id="lista_clientes"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <!-- MODAL: selector de productos -->
-<div class="modal fade" id="modalProductos" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-box-seam"></i> Seleccionar producto</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+<div class="overlay" id="modalProductos">
+    <div class="modal ancho" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <h2><i class="bi bi-box-seam"></i> Seleccionar producto</h2>
+            <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-buscar">
+            <div class="input-wrap">
+                <i class="bi bi-search icono"></i>
+                <input type="text" id="buscador_productos" placeholder="Buscar por nombre o talle (ej: nike 45)..." autocomplete="off">
             </div>
-            <div class="px-3 pt-3">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" id="buscador_productos" class="form-control"
-                        placeholder="Buscar por nombre o talle (ej: nike 45)..." autocomplete="off">
-                </div>
-                <div class="form-text">Tocá un producto para agregarlo a la venta. Enter elige el primero de la lista.</div>
-            </div>
-            <div class="modal-body">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light sticky-top">
-                        <tr>
-                            <th>Producto</th>
-                            <th class="text-center" style="width:90px">Talle</th>
-                            <th class="text-center" style="width:110px">Stock</th>
-                            <th class="text-end" style="width:130px">Precio</th>
-                            <th class="text-center" style="width:150px">Promo</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista_productos"></tbody>
-                </table>
-            </div>
+            <small>Tocá un producto para agregarlo a la venta. Enter elige el primero de la lista.</small>
+        </div>
+        <div class="modal-body scroll">
+            <table class="tabla" style="min-width:0">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th class="centro">Talle</th>
+                        <th class="centro">Stock</th>
+                        <th class="der">Precio</th>
+                        <th class="centro">Promo</th>
+                    </tr>
+                </thead>
+                <tbody id="lista_productos"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-const productosData      = <?= json_encode($productos) ?>;
-const promosPorProducto   = <?= json_encode($promosPorProducto) ?>;
-const clientesData       = <?= json_encode($clientes) ?>;
+const productosData     = <?= json_encode($productos, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+const promosPorProducto = <?= json_encode($promosPorProducto, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+const clientesData      = <?= json_encode($clientes, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
-let filaActual      = null;   // fila (idx) para la que se está eligiendo producto
-let modalProductos  = null;
-let modalClientes   = null;
-let ultimaLista     = [];     // resultados actuales del buscador de productos
-let ultimaListaCli  = [];     // resultados actuales del buscador de clientes
+let filaActual     = null;   // fila (idx) para la que se está eligiendo producto
+let ultimaLista    = [];     // resultados actuales del buscador de productos
+let ultimaListaCli = [];     // resultados actuales del buscador de clientes
+
+const ovClientes  = document.getElementById('modalClientes');
+const ovProductos = document.getElementById('modalProductos');
+
+// ---------- Modales propios ----------
+const abrirModal  = el => el.classList.add('abierto');
+const cerrarModal = el => el.classList.remove('abierto');
+
+document.querySelectorAll('[data-cerrar]').forEach(b => {
+    b.addEventListener('click', () => cerrarModal(b.closest('.overlay')));
+});
+[ovClientes, ovProductos].forEach(ov => {
+    ov.addEventListener('click', e => { if (e.target === ov) cerrarModal(ov); });
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { cerrarModal(ovClientes); cerrarModal(ovProductos); }
+});
 
 // ---------- Utilidades ----------
 function esc(t) {
@@ -215,13 +228,13 @@ function textoPromo(promo) {
 // =====================================================
 //  CLIENTES
 // =====================================================
+const buscadorCli = document.getElementById('buscador_clientes');
+
 function abrirSelectorCliente() {
-    if (!modalClientes) {
-        modalClientes = new bootstrap.Modal(document.getElementById('modalClientes'));
-    }
-    document.getElementById('buscador_clientes').value = '';
+    buscadorCli.value = '';
     renderClientes('');
-    modalClientes.show();
+    abrirModal(ovClientes);
+    setTimeout(() => buscadorCli.focus(), 50);
 }
 
 function renderClientes(filtro) {
@@ -234,21 +247,19 @@ function renderClientes(filtro) {
     });
 
     // Fila fija: Consumidor final (sin cliente)
-    let html = `<tr class="table-success" style="cursor:pointer" onclick="elegirCliente('')">
-                    <td colspan="3" class="fw-semibold">
-                        <i class="bi bi-person"></i> Consumidor final
-                        <span class="text-muted fw-normal small">(sin cliente)</span>
+    let html = `<tr class="clic destacada" onclick="elegirCliente('')">
+                    <td colspan="3" style="font-weight:600">
+                        <i class="bi bi-person" style="color:var(--lila)"></i> Consumidor final
+                        <span style="color:var(--muted);font-weight:400;font-size:12px">(sin cliente)</span>
                     </td>
                 </tr>`;
 
     if (!ultimaListaCli.length) {
-        html += `<tr><td colspan="3" class="text-center text-muted py-4">
-                No se encontraron clientes
-                </td></tr>`;
+        html += `<tr><td colspan="3" class="vacio">No se encontraron clientes</td></tr>`;
     } else {
         html += ultimaListaCli.map(c => `
-            <tr style="cursor:pointer" onclick="elegirCliente('${c.id_cliente}')">
-                <td class="fw-semibold">${esc(c.nombre_completo)}</td>
+            <tr class="clic" onclick="elegirCliente('${c.id_cliente}')">
+                <td class="nombre-prod">${esc(c.nombre_completo)}</td>
                 <td>${esc(c.dni ?? '-')}</td>
                 <td>${esc(c.telefono ?? '-')}</td>
             </tr>`).join('');
@@ -264,23 +275,22 @@ function elegirCliente(id) {
 
     if (!id) {
         hidden.value  = '';
-        btn.className = 'btn btn-outline-secondary text-start flex-grow-1';
+        btn.className = 'btn-select';
         btn.innerHTML = '<i class="bi bi-person"></i> Consumidor final';
-        quitar.classList.add('d-none');
+        quitar.classList.add('hide');
     } else {
         const c = clientesData.find(x => x.id_cliente == id);
         if (!c) return;
         hidden.value  = c.id_cliente;
-        btn.className = 'btn btn-outline-success text-start flex-grow-1';
+        btn.className = 'btn-select elegido';
         btn.innerHTML = `<i class="bi bi-person-check-fill"></i> ${esc(c.nombre_completo)}` +
-                        (c.dni ? ` <span class="text-muted small">· DNI ${esc(c.dni)}</span>` : '');
-        quitar.classList.remove('d-none');
+                        (c.dni ? ` <small>· DNI ${esc(c.dni)}</small>` : '');
+        quitar.classList.remove('hide');
     }
 
-    if (modalClientes) modalClientes.hide();
+    cerrarModal(ovClientes);
 }
 
-const buscadorCli = document.getElementById('buscador_clientes');
 buscadorCli.addEventListener('input', () => renderClientes(buscadorCli.value));
 buscadorCli.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
@@ -291,7 +301,6 @@ buscadorCli.addEventListener('keydown', e => {
         }
     }
 });
-document.getElementById('modalClientes').addEventListener('shown.bs.modal', () => buscadorCli.focus());
 
 // =====================================================
 //  FILAS DE LA VENTA
@@ -303,39 +312,35 @@ function agregarFila(abrirSelectorAuto = false) {
     const tr = document.createElement('tr');
     tr.dataset.idx = idx;
     tr.innerHTML = `
-        <td class="align-middle">
+        <td>
             <input type="hidden" name="producto_id[]" id="prod_${idx}" value="">
-            <button type="button" class="btn btn-outline-secondary btn-sm w-100 text-start"
-                    id="btn_prod_${idx}" onclick="abrirSelector('${idx}')">
+            <button type="button" class="btn-select sm" id="btn_prod_${idx}" onclick="abrirSelector('${idx}')">
                 <i class="bi bi-search"></i> Seleccionar producto
             </button>
         </td>
-        <td class="text-center align-middle">
-            <span id="talle_${idx}">—</span>
-        </td>
-        <td class="text-center align-middle">
+        <td class="centro"><span id="talle_${idx}">—</span></td>
+        <td class="centro">
             <span id="stock_${idx}">—</span>
             <input type="hidden" name="precio_unitario[]" id="precio_${idx}" value="0">
             <input type="hidden" name="nombre_producto[]" id="nombre_${idx}" value="">
         </td>
-        <td>
-            <input type="number" name="cantidad[]" id="cant_${idx}"
-                class="form-control form-control-sm" value="1" min="1"
-                required oninput="calcularFila('${idx}')">
+        <td class="centro">
+            <input type="number" name="cantidad[]" id="cant_${idx}" class="input-sm"
+                   value="1" min="1" required oninput="calcularFila('${idx}')">
         </td>
-        <td class="text-end align-middle" id="precio_label_${idx}">$0.00</td>
-        <td class="text-center align-middle" id="promo_celda_${idx}">
+        <td class="der" id="precio_label_${idx}">$0.00</td>
+        <td class="centro" id="promo_celda_${idx}">
             <input type="hidden" name="aplicar_promo[]" id="aplica_promo_${idx}" value="0">
-            <div class="form-check form-switch d-flex justify-content-center d-none" id="promo_toggle_${idx}">
-                <input class="form-check-input" type="checkbox" role="switch" id="chk_promo_${idx}"
-                    title="Aplicar promoción a esta línea"
-                    onchange="document.getElementById('aplica_promo_${idx}').value = this.checked ? '1' : '0'; calcularFila('${idx}')">
-            </div>
-            <div class="small text-muted" id="promo_label_${idx}"></div>
+            <label class="switch hide" id="promo_toggle_${idx}" title="Aplicar promoción a esta línea">
+                <input type="checkbox" id="chk_promo_${idx}"
+                       onchange="document.getElementById('aplica_promo_${idx}').value = this.checked ? '1' : '0'; calcularFila('${idx}')">
+                <span class="slider"></span>
+            </label>
+            <div class="promo-txt" id="promo_label_${idx}"></div>
         </td>
-        <td class="text-end align-middle fw-bold" id="subtotal_${idx}">$0.00</td>
-        <td class="text-center align-middle">
-            <button type="button" class="btn btn-danger btn-sm"
+        <td class="der precio" id="subtotal_${idx}">$0.00</td>
+        <td class="centro">
+            <button type="button" class="btn-icon baja" title="Quitar producto"
                     onclick="this.closest('tr').remove(); calcularTotal()">
                 <i class="bi bi-trash"></i>
             </button>
@@ -349,14 +354,14 @@ function agregarFila(abrirSelectorAuto = false) {
 // =====================================================
 //  PRODUCTOS (modal selector)
 // =====================================================
+const buscador = document.getElementById('buscador_productos');
+
 function abrirSelector(idx) {
     filaActual = idx;
-    if (!modalProductos) {
-        modalProductos = new bootstrap.Modal(document.getElementById('modalProductos'));
-    }
-    document.getElementById('buscador_productos').value = '';
+    buscador.value = '';
     renderLista('');
-    modalProductos.show();
+    abrirModal(ovProductos);
+    setTimeout(() => buscador.focus(), 50);
 }
 
 function renderLista(filtro) {
@@ -369,9 +374,7 @@ function renderLista(filtro) {
     });
 
     if (!ultimaLista.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">
-                            No se encontraron productos
-                        </td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="vacio">No se encontraron productos</td></tr>`;
         return;
     }
 
@@ -382,21 +385,20 @@ function renderLista(filtro) {
         const sinStock = stock <= 0;
 
         const badgeStock = sinStock
-            ? '<span class="badge bg-secondary">Sin stock</span>'
-            : `<span class="badge ${stock <= 3 ? 'bg-warning text-dark' : 'bg-success'}">${stock}</span>`;
+            ? '<span class="estado neutro">Sin stock</span>'
+            : `<span class="estado ${stock <= 3 ? 'sobre' : 'normal'}">${stock}</span>`;
 
         const badgePromo = promo
-            ? `<span class="badge bg-danger">🏷️ ${esc(textoPromo(promo))}</span>`
+            ? `<span class="estado bajo"><i class="bi bi-tag-fill"></i> ${esc(textoPromo(promo))}</span>`
             : '';
 
-        return `<tr class="${sinStock ? 'text-muted' : ''}"
-                    style="${sinStock ? 'opacity:.55' : 'cursor:pointer'}"
+        return `<tr class="${sinStock ? 'deshab' : 'clic'}"
                     ${sinStock ? '' : `onclick="elegirProducto('${p.id_producto}')"`}>
-                    <td class="fw-semibold">${esc(p.nombre)}</td>
-                    <td class="text-center">${esc(talle)}</td>
-                    <td class="text-center">${badgeStock}</td>
-                    <td class="text-end">$${parseFloat(p.precio).toFixed(2)}</td>
-                    <td class="text-center">${badgePromo}</td>
+                    <td class="nombre-prod">${esc(p.nombre)}</td>
+                    <td class="centro"><span class="chip">${esc(talle)}</span></td>
+                    <td class="centro">${badgeStock}</td>
+                    <td class="der precio">$${parseFloat(p.precio).toFixed(2)}</td>
+                    <td class="centro">${badgePromo}</td>
                 </tr>`;
     }).join('');
 }
@@ -405,11 +407,10 @@ function elegirProducto(idProducto) {
     const p = productosData.find(x => x.id_producto == idProducto);
     if (!p || filaActual === null) return;
     seleccionarProducto(filaActual, p);
-    modalProductos.hide();
+    cerrarModal(ovProductos);
 }
 
 // Buscador: filtra mientras se escribe, Enter elige el primero con stock
-const buscador = document.getElementById('buscador_productos');
 buscador.addEventListener('input', () => renderLista(buscador.value));
 buscador.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
@@ -418,7 +419,6 @@ buscador.addEventListener('keydown', e => {
         if (primero) elegirProducto(primero.id_producto);
     }
 });
-document.getElementById('modalProductos').addEventListener('shown.bs.modal', () => buscador.focus());
 
 // ---------- Aplicar el producto elegido a la fila ----------
 function seleccionarProducto(idx, p) {
@@ -438,21 +438,21 @@ function seleccionarProducto(idx, p) {
     cant.value = 1;
 
     const btn = document.getElementById(`btn_prod_${idx}`);
-    btn.className = 'btn btn-outline-dark btn-sm w-100 text-start';
+    btn.className = 'btn-select sm elegido';
     btn.innerHTML = `<i class="bi bi-pencil-square"></i> ${esc(p.nombre)}`;
 
     // Promoción
     const promo        = promosPorProducto[p.id_producto];
-    const toggleDiv    = document.getElementById(`promo_toggle_${idx}`);
+    const toggleLabel  = document.getElementById(`promo_toggle_${idx}`);
     const labelDiv     = document.getElementById(`promo_label_${idx}`);
     const chk          = document.getElementById(`chk_promo_${idx}`);
     const hiddenAplica = document.getElementById(`aplica_promo_${idx}`);
 
     if (promo) {
-        toggleDiv.classList.remove('d-none');
+        toggleLabel.classList.remove('hide');
         labelDiv.textContent = `${promo.nombre} (${textoPromo(promo)})`;
     } else {
-        toggleDiv.classList.add('d-none');
+        toggleLabel.classList.add('hide');
         labelDiv.textContent = '';
     }
     chk.checked        = false;   // por defecto la promo viene DESACTIVADA

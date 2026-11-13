@@ -1,88 +1,111 @@
+<?php
+$errores = [
+    'producto_requerido' => 'Seleccioná un producto.',
+    'stock_invalido'     => 'El stock máximo no puede ser menor al stock mínimo.',
+    'producto_duplicado' => 'Ese producto ya tiene una fila de inventario activa. Usá Entrada para sumar stock.',
+];
+$error = $_GET['error'] ?? '';
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nuevo Inventario - GamaStore</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cargar Stock | GamaStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<link href="css/gamastore.css" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Cargar Stock Manualmente</h5>
-                </div>
-                <div class="card-body">
+<?php require __DIR__ . '/../../../ayudantes/navbar.php'; ?>
 
-                    <?php
-                    $errores = [
-                        'producto_requerido' => 'Seleccioná un producto.',
-                        'stock_invalido'     => 'El stock máximo no puede ser menor al stock mínimo.',
-                    ];
-                    if (isset($_GET['error']) && isset($errores[$_GET['error']])): ?>
-                        <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-triangle-fill"></i> <?= $errores[$_GET['error']] ?>
-                        </div>
-                    <?php endif; ?>
+<main class="wrap estrecho">
 
-                    <form action="index.php?action=inventario_guardar" method="POST">
+    <div class="page-head">
+        <div>
+            <div class="page-label">Inventario</div>
+            <h1 class="page-titulo"><i class="bi bi-plus-circle"></i> Cargar stock manualmente</h1>
+            <p class="page-sub">Registrá un producto en el inventario con su ubicación y límites de stock.</p>
+        </div>
+        <div class="page-btns">
+            <a href="index.php?action=inventario" class="btn btn-ghost"><i class="bi bi-arrow-left"></i> Volver</a>
+        </div>
+    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Producto</label>
-                            <select name="producto_id_producto" class="form-select" required>
-                                <option value="">-- Seleccionar producto --</option>
+    <?php if (isset($errores[$error])): ?>
+        <div class="alerta danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> <?= $errores[$error] ?>
+            <button type="button" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+    <?php endif; ?>
+
+    <div class="panel">
+        <div class="panel-body">
+            <form action="index.php?action=inventario_guardar" method="POST">
+
+                <div class="form-grid">
+
+                    <div class="campo col-3">
+                        <label for="producto">Producto</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-box-seam icono"></i>
+                            <select id="producto" name="producto_id_producto" required>
+                                <option value="">Seleccionar producto</option>
                                 <?php foreach ($productos as $p): ?>
                                     <option value="<?= $p['id_producto'] ?>">
-                                        <?= htmlspecialchars($p['nombre']) ?>
+                                        <?= htmlspecialchars($p['nombre']) ?> — talle <?= htmlspecialchars($p['talle'] ?? '-') ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <i class="bi bi-chevron-down flecha"></i>
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Ubicación</label>
-                            <input type="text" name="ubicacion" class="form-control"
-                                placeholder="Ej: Estante A3">
+                    <div class="campo col-3">
+                        <label for="ubicacion">Ubicación</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-geo-alt icono"></i>
+                            <input type="text" id="ubicacion" name="ubicacion" placeholder="Ej: Estante A3">
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Stock Actual</label>
-                                <input type="number" name="stock_actual" class="form-control"
-                                    value="0" min="0" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Stock Mínimo</label>
-                                <input type="number" name="stock_minimo" class="form-control"
-                                    value="0" min="0" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Stock Máximo</label>
-                                <input type="number" name="stock_maximo" class="form-control"
-                                    value="0" min="0" required>
-                            </div>
+                    <div class="campo col-2">
+                        <label for="stock_actual">Stock actual</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-stack icono"></i>
+                            <input type="number" id="stock_actual" name="stock_actual" value="0" min="0" required>
                         </div>
+                    </div>
 
-                        <div class="d-flex justify-content-between">
-                            <a href="index.php?action=inventario" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-save"></i> Guardar
-                            </button>
+                    <div class="campo col-2">
+                        <label for="stock_minimo">Stock mínimo</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-arrow-down-circle icono"></i>
+                            <input type="number" id="stock_minimo" name="stock_minimo" value="0" min="0" required>
                         </div>
+                    </div>
 
-                    </form>
+                    <div class="campo col-2">
+                        <label for="stock_maximo">Stock máximo</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-arrow-up-circle icono"></i>
+                            <input type="number" id="stock_maximo" name="stock_maximo" value="0" min="0" required>
+                        </div>
+                    </div>
+
                 </div>
-            </div>
+
+                <div class="form-acciones">
+                    <button type="submit" class="btn btn-main"><i class="bi bi-save"></i> Guardar</button>
+                    <a href="index.php?action=inventario" class="btn btn-ghost">Cancelar</a>
+                </div>
+
+            </form>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</main>
+
 </body>
 </html>

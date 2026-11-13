@@ -1,88 +1,109 @@
+<?php $error = $_GET['error'] ?? ''; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Cliente - GamaStore</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editar Cliente | GamaStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<link href="css/gamastore.css" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-5">
+<?php require __DIR__ . '/../../../ayudantes/navbar.php'; ?>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-pencil-square"></i> Editar Cliente</h2>
-        <a href="index.php?action=clientes" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> Volver
-        </a>
+<main class="wrap estrecho">
+
+    <div class="page-head">
+        <div>
+            <div class="page-label">Clientes</div>
+            <h1 class="page-titulo"><i class="bi bi-pencil-square"></i> Editar cliente</h1>
+            <p class="page-sub">Modificá los datos de
+                <strong><?= htmlspecialchars($cliente['nombre'] . ' ' . $cliente['apellido']) ?></strong>.
+            </p>
+        </div>
+        <div class="page-btns">
+            <a href="index.php?action=clientes" class="btn btn-ghost"><i class="bi bi-arrow-left"></i> Volver</a>
+        </div>
     </div>
 
-    
-    <?php if (isset($_GET['error'])): ?>
-        <?php if ($_GET['error'] === 'dni_duplicado'): ?>
-            <div class="alert alert-danger alert-dismissible fade show">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                Ya existe otro cliente con ese DNI. Ingresá uno diferente.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php elseif ($_GET['error'] === 'email_duplicado'): ?>
-            <div class="alert alert-danger alert-dismissible fade show">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                Ya existe otro cliente con ese email. Ingresá uno diferente.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+    <?php if ($error === 'dni_duplicado'): ?>
+        <div class="alerta danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> Ya existe otro cliente con ese DNI. Ingresá uno diferente.
+            <button type="button" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+    <?php elseif ($error === 'email_duplicado'): ?>
+        <div class="alerta danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> Ya existe otro cliente con ese email. Ingresá uno diferente.
+            <button type="button" onclick="this.parentElement.remove()">&times;</button>
+        </div>
     <?php endif; ?>
 
-    <div class="card shadow-sm">
-        <div class="card-body">
+    <div class="panel">
+        <div class="panel-body">
             <form method="POST" action="index.php?action=update_cliente">
 
-                
                 <input type="hidden" name="id_persona" value="<?= $cliente['id_persona'] ?>">
-                 
                 <input type="hidden" name="id_cliente" value="<?= $cliente['id_cliente'] ?>">
 
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Nombre</label>
-                        <input type="text" name="nombre" class="form-control"
-                            value="<?= htmlspecialchars($cliente['nombre']) ?>" required>
+                <div class="form-grid">
+                    <div class="campo col-3">
+                        <label for="nombre">Nombre</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-person icono"></i>
+                            <input type="text" id="nombre" name="nombre" required
+                                   value="<?= htmlspecialchars($cliente['nombre']) ?>">
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Apellido</label>
-                        <input type="text" name="apellido" class="form-control"
-                            value="<?= htmlspecialchars($cliente['apellido']) ?>" required>
+
+                    <div class="campo col-3">
+                        <label for="apellido">Apellido</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-person icono"></i>
+                            <input type="text" id="apellido" name="apellido" required
+                                   value="<?= htmlspecialchars($cliente['apellido']) ?>">
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">DNI</label>
-                        <input type="text" name="dni" class="form-control"
-                            value="<?= htmlspecialchars($cliente['dni']) ?>" required>
+
+                    <div class="campo col-2">
+                        <label for="dni">DNI</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-card-heading icono"></i>
+                            <input type="text" id="dni" name="dni" required
+                                   value="<?= htmlspecialchars($cliente['dni']) ?>">
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Teléfono</label>
-                        <input type="text" name="telefono" class="form-control"
-                            value="<?= htmlspecialchars($cliente['telefono']) ?>">
+
+                    <div class="campo col-2">
+                        <label for="telefono">Teléfono</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-telephone icono"></i>
+                            <input type="text" id="telefono" name="telefono"
+                                   value="<?= htmlspecialchars($cliente['telefono']) ?>">
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Email</label>
-                        <input type="email" name="email" class="form-control"
-                            value="<?= htmlspecialchars($cliente['email']) ?>">
+
+                    <div class="campo col-2">
+                        <label for="email">Email</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-envelope icono"></i>
+                            <input type="email" id="email" name="email"
+                                   value="<?= htmlspecialchars($cliente['email']) ?>">
+                        </div>
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-warning text-white">
-                        <i class="bi bi-save"></i> Actualizar Cliente
-                    </button>
+                <div class="form-acciones">
+                    <button type="submit" class="btn btn-main"><i class="bi bi-save"></i> Actualizar cliente</button>
+                    <a href="index.php?action=clientes" class="btn btn-ghost">Cancelar</a>
                 </div>
 
             </form>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</main>
+
 </body>
 </html>

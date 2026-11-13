@@ -17,6 +17,7 @@ class ConfiguracionController {
 
         $marcas     = $this->configuracion->listarMarcas();
         $categorias = $this->configuracion->listarCategorias();
+        $talles     = $this->configuracion->listarTalles();   
 
         require __DIR__ . '/views/index.php';
     }
@@ -64,4 +65,34 @@ class ConfiguracionController {
         header("Location: index.php?action=configuraciones&ok_categoria=1");
         exit();
     }
+    
+    // GUARDAR nuevo talle
+    public function storeTalle() {
+        Auth::verificarModulo('configuraciones');
+
+        $nombre = trim($_POST['talles_disponibles'] ?? '');
+
+        if ($nombre === '') {
+            header("Location: index.php?action=configuraciones&error=talle_vacio");
+            exit();
+        }
+
+        // Solo números (con medio talle opcional): 38, 38.5 o 38,5
+        if (!preg_match('/^\d{1,2}([.,]5)?$/', $nombre)) {
+            header("Location: index.php?action=configuraciones&error=talle_invalido");
+            exit();
+        }
+        $nombre = str_replace(',', '.', $nombre);
+
+        if ($this->configuracion->existeTalle($nombre)) {
+            header("Location: index.php?action=configuraciones&error=talle_duplicado");
+            exit();
+        }
+
+        $this->configuracion->crearTalle($nombre);
+
+        header("Location: index.php?action=configuraciones&ok_talle=1");
+        exit();
+    }
+
 }

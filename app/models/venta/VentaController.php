@@ -1,17 +1,21 @@
 <?php
 require_once __DIR__ . '/venta.php';
 require_once __DIR__ . '/../promocion/promocion.php';
+require_once __DIR__ . '/../caja/caja.php';
 
 class VentaController {
 
     private $venta;
     private $promocion;
+    private $caja;
     private $db;
+    
 
     public function __construct() {
         $this->db        = (new Database())->connect();
         $this->venta      = new venta($this->db);
         $this->promocion  = new Promocion($this->db);
+        $this->caja       = new Caja($this->db);   
     }
 
     private function usuarioActualId() {
@@ -71,6 +75,10 @@ class VentaController {
 
     public function create() {
         Auth::verificarModulo('ventas');
+        if (!$this->caja->obtenerAbierta()) {
+            header("Location: index.php?action=caja&error=caja_requerida");
+            exit();
+        }
         $clientes  = $this->venta->listarClientes();
         $productos = $this->venta->listarProductos();
 
@@ -88,12 +96,26 @@ class VentaController {
     public function store() {
         Auth::verificarModulo('ventas');
 
+        if (!$this->caja->obtenerAbierta()) {
+            header("Location: index.php?action=caja&error=caja_requerida");
+            exit();
+        }
+
         $productos_ids     = $_POST['producto_id'] ?? [];
         $cantidades        = $_POST['cantidad'] ?? [];
         $precios_unitarios = $_POST['precio_unitario'] ?? [];
-        $cliente_id        = $_POST['cliente_idcliente'] ?: null;
+        $cliente_id        = (int)($_POST['cliente_idcliente'] ?? 0);
         $aplicar_promo     = $_POST['aplicar_promo'] ?? []; // '1' o '0' por cada línea, alineado por índice
-
+        
+        // El cliente es obligatorio y tiene que estar registrado y activo
+        if ($cliente_id <= 0) {
+            header("Location: index.php?action=ventas_crear&error=cliente_requerido");
+            exit();
+        }
+        if (!$this->venta->existeClienteActivo($cliente_id)) {
+            header("Location: index.php?action=ventas_crear&error=cliente_invalido");
+            exit();
+        }
         if (empty($productos_ids)) {
             header("Location: index.php?action=ventas_crear&error=sin_productos");
             exit();
@@ -118,6 +140,13 @@ class VentaController {
         $this->db->beginTransaction();
 
         try {
+            // Lock compartido: si se está cerrando la caja, esta venta espera o se rechaza
+            $caja = $this->caja->obtenerAbierta(true);
+            if (!$caja) {
+                throw new Exception('caja_cerrada');
+            }
+            $data['caja_id'] = $caja['id_caja'];
+
             $id_venta = $this->venta->crear($data);
             $total    = 0;
 
@@ -151,6 +180,10 @@ class VentaController {
 
         } catch (Exception $e) {
             $this->db->rollBack();
+            if ($e->getMessage() === 'caja_cerrada') {
+                header("Location: index.php?action=caja&error=caja_requerida");
+                exit();
+            }
             header("Location: index.php?action=ventas_crear&error=error_al_guardar");
             exit();
         }
@@ -179,6 +212,11 @@ class VentaController {
 
         if ($venta['estado'] === 'cancelada') {
             header("Location: index.php?action=ventas_ver&id={$id}&error=ya_cancelada");
+            exit();
+        }
+        // No se cancelan ventas de una caja que ya fue cerrada (desfasaría el arqueo)
+        if (!empty($venta['caja_id']) && $this->caja->estaCerrada($venta['caja_id'])) {
+            header("Location: index.php?action=ventas_ver&id={$id}&error=caja_cerrada");
             exit();
         }
 

@@ -1,5 +1,5 @@
 <?php
-
+date_default_timezone_set('America/Argentina/Buenos_Aires');
 session_start();
 
 ob_start(function ($html) {
@@ -59,6 +59,9 @@ require_once "../app/models/venta/VentaController.php";
 require_once "../app/models/promocion/PromocionController.php";
 require_once "../app/models/reporte/ReporteController.php";
 require_once '../app/models/configuracion/ConfiguracionController.php';
+require_once '../app/ayudantes/Correo.php';
+require_once '../app/models/proveedor/ProveedorController.php';
+require_once '../app/models/caja/CajaController.php';
 
 $auth       = new AuthController();
 $product    = new ProductController();
@@ -72,6 +75,8 @@ $promocion = new PromocionController();
 $reporte = new ReporteController();
 $auditoriaCtrl = new AuditoriaController();
 $configuracion = new ConfiguracionController();
+$proveedorCtrl = new ProveedorController();
+$cajaCtrl = new CajaController();
 
 if (!isset($_GET['action'])) {
     if (isset($_SESSION['usuario'])) {
@@ -196,6 +201,10 @@ switch ($action) {
         break;
     case 'guardar_categoria':
         $configuracion->storeCategoria();
+        break;
+        
+    case 'guardar_talle':
+        $configuracion->storeTalle();
         break;
 
     // CLIENTES
@@ -335,6 +344,59 @@ switch ($action) {
     case 'auditoria':
         $auditoriaCtrl->index();
         break;
+        
+        // PROVEEDORES
+    case 'proveedores':
+        $proveedorCtrl->index();
+        break;
+    case 'proveedores_crear':
+        $proveedorCtrl->create();
+        break;
+    case 'proveedores_guardar':
+        $proveedorCtrl->store();
+        break;
+    case 'proveedores_editar':
+        $proveedorCtrl->edit();
+        break;
+    case 'proveedores_actualizar':
+        $proveedorCtrl->update();
+        break;
+    case 'proveedores_eliminar':
+        $proveedorCtrl->delete();
+        break;
+    case 'proveedores_reactivar':
+        $proveedorCtrl->reactivar();
+        break;
+
+    // CAJA
+    case 'caja':
+        $cajaCtrl->index();
+        break;
+    case 'caja_abrir':
+        $cajaCtrl->abrir();
+        break;
+    case 'caja_abrir_guardar':
+        $cajaCtrl->abrirGuardar();
+        break;
+    case 'caja_cerrar':
+        $cajaCtrl->cerrar();
+        break;
+    case 'caja_cerrar_guardar':
+        $cajaCtrl->cerrarGuardar();
+        break;
+    case 'caja_ver':
+        $cajaCtrl->show();
+        break;
+    case 'caja_movimiento':
+        $cajaCtrl->movimiento();
+        break;
+    case 'caja_movimiento_guardar':
+        $cajaCtrl->movimientoGuardar();
+        break;
+
+        
     default:
         echo "ERROR";
+
+
 }

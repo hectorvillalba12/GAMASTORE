@@ -11,12 +11,10 @@ class Product {
         $sql = "SELECT p.*,
                     t.talles_disponibles AS talle,
                     m.marcas_disponibles AS marca,
-                    c.colores_disponibles AS color,
                     cat.tipodezapatilla AS categoria
                 FROM producto p
                 LEFT JOIN talle t ON p.talle_id_talle = t.id_talle
                 LEFT JOIN marca m ON p.marca_id_marca = m.id_marca
-                LEFT JOIN color c ON p.color_id_color = c.id_color
                 LEFT JOIN categoria cat ON p.categoria_id_categoria = cat.id_categoria
                 WHERE p.activo = 1";
 
@@ -37,7 +35,7 @@ class Product {
         if (!empty($idTalle)) {
             $stmt->bindValue(':talle', $idTalle, PDO::PARAM_INT);
         }
-        
+
         $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
         $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
 
@@ -68,30 +66,28 @@ class Product {
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
+
     // LISTAR solo productos INACTIVOS (baja lógica)
     public function listarInactivos() {
         $sql = "SELECT p.*,
                     t.talles_disponibles AS talle,
                     m.marcas_disponibles AS marca,
-                    c.colores_disponibles AS color,
                     cat.tipodezapatilla AS categoria
                 FROM producto p
                 LEFT JOIN talle t ON p.talle_id_talle = t.id_talle
                 LEFT JOIN marca m ON p.marca_id_marca = m.id_marca
-                LEFT JOIN color c ON p.color_id_color = c.id_color
                 LEFT JOIN categoria cat ON p.categoria_id_categoria = cat.id_categoria
                 WHERE p.activo = 0
                 ORDER BY p.nombre ASC";
         return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // VALIDAR DUPLICADOS — mismo nombre + talle + marca + color
-    public function existeDuplicado($nombre, $talle, $marca, $color, $excluir_id = null) {
+    // VALIDAR DUPLICADOS — mismo nombre + talle + marca
+    public function existeDuplicado($nombre, $talle, $marca, $excluir_id = null) {
         $sql = "SELECT COUNT(*) FROM producto
                 WHERE nombre = :nombre
                 AND talle_id_talle = :talle
-                AND marca_id_marca = :marca
-                AND color_id_color = :color";
+                AND marca_id_marca = :marca";
 
         if ($excluir_id) {
             $sql .= " AND id_producto != :excluir_id";
@@ -101,7 +97,6 @@ class Product {
         $stmt->bindValue(':nombre', $nombre);
         $stmt->bindValue(':talle', $talle);
         $stmt->bindValue(':marca', $marca);
-        $stmt->bindValue(':color', $color);
 
         if ($excluir_id) {
             $stmt->bindValue(':excluir_id', $excluir_id);
@@ -114,19 +109,19 @@ class Product {
     // CREAR — retorna el id para crear inventario automáticamente
     public function crear($data) {
         $sql = "INSERT INTO producto
-                (nombre, descripcion, tipodezapatillas, precio, talle_id_talle, marca_id_marca, color_id_color, categoria_id_categoria, activo)
+                (nombre, descripcion, imagen, tipodezapatillas, precio, talle_id_talle, marca_id_marca, categoria_id_categoria, activo)
                 VALUES
-                (:nombre, :descripcion, :tipo, :precio, :talle, :marca, :color, :categoria, 1)";
+                (:nombre, :descripcion, :imagen, :tipo, :precio, :talle, :marca, :categoria, 1)";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([
             'nombre'      => $data['nombre'],
             'descripcion' => $data['descripcion'],
+            'imagen'      => $data['imagen'],
             'tipo'        => $data['tipodezapatillas'],
             'precio'      => $data['precio'],
             'talle'       => $data['talle'],
             'marca'       => $data['marca'],
-            'color'       => $data['color'],
             'categoria'   => $data['categoria']
         ]);
 
@@ -146,11 +141,11 @@ class Product {
         $sql = "UPDATE producto SET
                     nombre                 = :nombre,
                     descripcion            = :descripcion,
+                    imagen                 = :imagen,
                     tipodezapatillas       = :tipo,
                     precio                 = :precio,
                     talle_id_talle         = :talle,
                     marca_id_marca         = :marca,
-                    color_id_color         = :color,
                     categoria_id_categoria = :categoria
                 WHERE id_producto = :id";
 
@@ -159,11 +154,11 @@ class Product {
             'id'          => $data['id'],
             'nombre'      => $data['nombre'],
             'descripcion' => $data['descripcion'],
+            'imagen'      => $data['imagen'],
             'tipo'        => $data['tipo'],
             'precio'      => $data['precio'],
             'talle'       => $data['talle'],
             'marca'       => $data['marca'],
-            'color'       => $data['color'],
             'categoria'   => $data['categoria']
         ]);
     }

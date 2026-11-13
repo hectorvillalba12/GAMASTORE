@@ -1,91 +1,122 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Clientes - GamaStore</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <style>@media print { .no-print { display: none !important; } }</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clientes frecuentes | GamaStore</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<link href="css/gamastore.css?v=<?= @filemtime(__DIR__ . '/../../../../public/css/gamastore.css') ?>" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-5">
+<?php require __DIR__ . '/../../../ayudantes/navbar.php'; ?>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-        <h2><i class="bi bi-people"></i> Clientes frecuentes</h2>
-        <a href="index.php?action=reportes" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> Volver a Reportes
-        </a>
+<main class="wrap">
+
+    <div class="page-head">
+        <div>
+            <div class="page-label">Reportes</div>
+            <h1 class="page-titulo"><i class="bi bi-people"></i> Clientes frecuentes</h1>
+            <p class="page-sub">Ranking de compras y clientes nuevos del período.</p>
+        </div>
+        <div class="page-btns no-print">
+            <a href="index.php?action=reportes" class="btn btn-ghost">
+                <i class="bi bi-arrow-left"></i> Volver a reportes
+            </a>
+        </div>
     </div>
 
-    <form method="GET" action="index.php" class="row g-2 mb-4 no-print">
-        <input type="hidden" name="action" value="reportes_clientes">
-        <div class="col-auto">
-            <label class="form-label small mb-0">Desde</label>
-            <input type="date" name="desde" class="form-control form-control-sm" value="<?= htmlspecialchars($_GET['desde'] ?? date('Y-m-d', strtotime('-30 days'))) ?>">
-        </div>
-        <div class="col-auto">
-            <label class="form-label small mb-0">Hasta</label>
-            <input type="date" name="hasta" class="form-control form-control-sm" value="<?= htmlspecialchars($_GET['hasta'] ?? date('Y-m-d')) ?>">
-        </div>
-        <div class="col-auto align-self-end">
-            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-        </div>
-        <div class="col-auto align-self-end ms-auto">
-            <a href="index.php?action=reportes_excel&tipo=clientes&desde=<?= $_GET['desde'] ?? '' ?>&hasta=<?= $_GET['hasta'] ?? '' ?>"
-                class="btn btn-outline-success btn-sm">
-                <i class="bi bi-file-earmark-excel"></i> Exportar Excel
-            </a>
-            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-printer"></i> Imprimir / PDF
-            </button>
-            <button onclick="exportarGraficosPDF('graficos_clientes')" type="button" class="btn btn-outline-danger btn-sm">
-                <i class="bi bi-file-earmark-pdf"></i> Gráficos a PDF
-            </button>
-            <button onclick="exportarGraficosExcel('clientes', 'graficos_clientes')" type="button" class="btn btn-outline-success btn-sm">
-                <i class="bi bi-file-earmark-excel"></i> Gráficos a Excel
-            </button>
-        </div>
-    </form>
+    <!-- Filtros y exportación -->
+    <div class="panel no-print">
+        <div class="panel-body">
+            <form method="GET" action="index.php" class="filtros">
+                <input type="hidden" name="action" value="reportes_clientes">
 
-    <div class="card shadow-sm text-center mb-4" style="max-width:280px;">
-        <div class="card-body">
-            <div class="text-muted small">Clientes nuevos en el período</div>
-            <div class="fs-3 fw-bold text-primary"><?= (int)$nuevos ?></div>
+                <div class="filtro">
+                    <label for="desde">Desde</label>
+                    <div class="input-wrap">
+                        <i class="bi bi-calendar-event icono"></i>
+                        <input type="date" id="desde" name="desde"
+                               value="<?= htmlspecialchars($_GET['desde'] ?? date('Y-m-d', strtotime('-30 days'))) ?>">
+                    </div>
+                </div>
+
+                <div class="filtro">
+                    <label for="hasta">Hasta</label>
+                    <div class="input-wrap">
+                        <i class="bi bi-calendar-check icono"></i>
+                        <input type="date" id="hasta" name="hasta"
+                               value="<?= htmlspecialchars($_GET['hasta'] ?? date('Y-m-d')) ?>">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-main"><i class="bi bi-funnel"></i> Filtrar</button>
+
+                <div class="push">
+                    <a href="index.php?action=reportes_excel&tipo=clientes&desde=<?= urlencode($_GET['desde'] ?? '') ?>&hasta=<?= urlencode($_GET['hasta'] ?? '') ?>"
+                       class="btn btn-ok btn-sm">
+                        <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+                    </a>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Imprimir / PDF
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="exportarGraficosPDF('graficos_clientes')">
+                        <i class="bi bi-file-earmark-pdf"></i> Gráficos a PDF
+                    </button>
+                    <button type="button" class="btn btn-ok btn-sm" onclick="exportarGraficosExcel('clientes', 'graficos_clientes')">
+                        <i class="bi bi-file-earmark-excel"></i> Gráficos a Excel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="kpis">
+        <div class="kpi neutra">
+            <small>Clientes nuevos en el período</small>
+            <b><?= (int) $nuevos ?></b>
         </div>
     </div>
 
     <?php if (!empty($clientes)): ?>
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-dark text-white">Top clientes por cantidad de compras</div>
-        <div class="card-body">
-            <canvas id="graficoClientes" height="280"></canvas>
-        </div>
+    <div class="panel">
+        <div class="panel-head"><span><i class="bi bi-bar-chart"></i> Top clientes por cantidad de compras</span></div>
+        <div class="chart-box"><canvas id="graficoClientes" height="280"></canvas></div>
     </div>
     <?php endif; ?>
 
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <table class="table table-striped mb-0">
-                <thead class="table-dark">
+    <div class="panel">
+        <div class="panel-head">
+            <span><i class="bi bi-list-ol"></i> Ranking de clientes</span>
+            <span class="cuenta"><?= count($clientes ?? []) ?> clientes</span>
+        </div>
+        <div class="tabla-wrap">
+            <table class="tabla" style="min-width:560px">
+                <thead>
                     <tr>
                         <th>#</th>
                         <th>Cliente</th>
-                        <th class="text-center">Compras</th>
-                        <th class="text-end">Total comprado</th>
+                        <th class="centro">Compras</th>
+                        <th class="der">Total comprado</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if (empty($clientes)): ?>
-                    <tr><td colspan="4" class="text-center text-muted py-4">No hay compras en el período seleccionado.</td></tr>
+                    <tr><td colspan="4" class="vacio">No hay compras en el período seleccionado.</td></tr>
                 <?php else: ?>
                     <?php foreach ($clientes as $i => $c): ?>
                     <tr>
-                        <td><?= $i + 1 ?></td>
-                        <td><?= htmlspecialchars($c['nombre_cliente']) ?></td>
-                        <td class="text-center"><?= $c['cantidad_compras'] ?></td>
-                        <td class="text-end">$<?= number_format($c['total_comprado'], 2) ?></td>
+                        <td class="id"><?= $i + 1 ?></td>
+                        <td>
+                            <div class="celda-persona">
+                                <div class="avatar-sm"><?= strtoupper(mb_substr($c['nombre_cliente'], 0, 1)) ?></div>
+                                <?= htmlspecialchars($c['nombre_cliente']) ?>
+                            </div>
+                        </td>
+                        <td class="centro"><span class="stock-num"><?= $c['cantidad_compras'] ?></span></td>
+                        <td class="der precio">$<?= number_format($c['total_comprado'], 2, ',', '.') ?></td>
                     </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -94,14 +125,13 @@
         </div>
     </div>
 
-</div>
+</main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/graficos-export.js"></script>
 <script>
-const datosClientes = <?= json_encode($clientes) ?>;
+const datosClientes = <?= json_encode($clientes, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
 if (datosClientes.length > 0) {
     new Chart(document.getElementById('graficoClientes'), {
@@ -111,7 +141,8 @@ if (datosClientes.length > 0) {
             datasets: [{
                 label: 'Compras',
                 data: datosClientes.map(c => parseInt(c.cantidad_compras)),
-                backgroundColor: '#0d6efd'
+                backgroundColor: '#38bdf8',
+                borderRadius: 6
             }]
         },
         options: {
@@ -123,5 +154,6 @@ if (datosClientes.length > 0) {
     });
 }
 </script>
+
 </body>
 </html>

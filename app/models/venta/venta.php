@@ -128,14 +128,15 @@ class venta {
 
     // CREAR una venta y devolver su ID. El total se completa después, con updateTotal()
     public function crear($data) {
-        $sql = "INSERT INTO venta (fecha, total, metodo_de_pago, cliente_idcliente, empleado_id_empleado)
-                VALUES (NOW(), :total, :metodo_de_pago, :cliente_id, :empleado_id)";
+        $sql = "INSERT INTO venta (fecha, total, metodo_de_pago, cliente_idcliente, empleado_id_empleado, caja_id)
+                VALUES (NOW(), :total, :metodo_de_pago, :cliente_id, :empleado_id, :caja_id)";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([
             'total'          => 0, 
             'metodo_de_pago' => $data['metodo_de_pago'],
             'cliente_id'     => $data['cliente_idcliente'] ?: null,
-            'empleado_id'    => $data['empleado_id_empleado'] ?: null
+            'empleado_id'    => $data['empleado_id_empleado'] ?: null,
+            'caja_id'        => $data['caja_id'] ?? null
         ]);
         return $this->conn->lastInsertId();
     }
@@ -291,7 +292,6 @@ class venta {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // LISTAR clientes para el selector
     public function listarClientes() {
         $sql = "SELECT c.id_cliente,
                     CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo,
@@ -299,10 +299,17 @@ class venta {
                     p.telefono
                 FROM cliente c
                 JOIN persona p ON c.persona_idpersona = p.id_persona
+                WHERE c.estado = 'activo'
                 ORDER BY p.nombre ASC";
         return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // ¿Existe el cliente y está activo? (validación del lado del servidor)
+    public function existeClienteActivo($id_cliente) {
+        $stmt = $this->conn->prepare("SELECT COUNT(*) FROM cliente WHERE id_cliente = :id AND estado = 'activo'");
+        $stmt->execute(['id' => $id_cliente]);
+        return $stmt->fetchColumn() > 0;
+    }
     // LISTAR productos con stock disponible
     public function listarProductos() {
         $sql = "SELECT pr.id_producto, pr.nombre, pr.precio, i.stock_actual,
