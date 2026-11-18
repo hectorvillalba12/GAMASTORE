@@ -87,10 +87,12 @@ class Caja {
 
     // RESUMEN de lo vendido en una caja: por método de pago, total, efectivo y canceladas
     public function resumen($id_caja) {
-        $sql = "SELECT metodo_de_pago, COUNT(*) AS cantidad, COALESCE(SUM(total), 0) AS total
-                FROM venta
-                WHERE caja_id = :id AND estado = 'completada'
-                GROUP BY metodo_de_pago";
+        // Se lee de venta_pago: una venta combinada suma a cada método lo que se pagó con él
+        $sql = "SELECT vp.metodo_de_pago, COUNT(*) AS cantidad, COALESCE(SUM(vp.monto), 0) AS total
+                FROM venta_pago vp
+                JOIN venta v ON v.id_venta = vp.venta_id
+                WHERE v.caja_id = :id AND v.estado = 'completada'
+                GROUP BY vp.metodo_de_pago";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute(['id' => $id_caja]);
         $filas = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -113,10 +115,15 @@ class Caja {
         }
         $porMetodo = array_values($porMetodo);
 
-        $total = 0; $cantidad = 0; $efectivo = 0;
+        // Cantidad real de ventas (una venta combinada cuenta una sola vez)
+        $stmtCant = $this->conn->prepare(
+            "SELECT COUNT(*) FROM venta WHERE caja_id = :id AND estado = 'completada'");
+        $stmtCant->execute(['id' => $id_caja]);
+        $cantidad = (int)$stmtCant->fetchColumn();
+
+        $total = 0; $efectivo = 0;
         foreach ($porMetodo as $f) {
-            $total    += (float)$f['total'];
-            $cantidad += (int)$f['cantidad'];
+            $total += (float)$f['total'];
             if ($f['metodo_de_pago'] === 'Efectivo') {
                 $efectivo += (float)$f['total'];
             }

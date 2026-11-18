@@ -106,15 +106,35 @@ class Product {
         return $stmt->fetchColumn() > 0;
     }
 
+    // VALIDAR CÓDIGO ÚNICO — un código no puede repetirse (se revisan activos e inactivos)
+    public function existeCodigo($codigo, $excluir_id = null) {
+        $sql = "SELECT COUNT(*) FROM producto WHERE codigo = :codigo";
+
+        if ($excluir_id) {
+            $sql .= " AND id_producto != :excluir_id";
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':codigo', $codigo);
+
+        if ($excluir_id) {
+            $stmt->bindValue(':excluir_id', $excluir_id);
+        }
+
+        $stmt->execute();
+        return $stmt->fetchColumn() > 0;
+    }
+
     // CREAR — retorna el id para crear inventario automáticamente
     public function crear($data) {
         $sql = "INSERT INTO producto
-                (nombre, descripcion, imagen, tipodezapatillas, precio, talle_id_talle, marca_id_marca, categoria_id_categoria, activo)
+                (codigo, nombre, descripcion, imagen, tipodezapatillas, precio, talle_id_talle, marca_id_marca, categoria_id_categoria, activo)
                 VALUES
-                (:nombre, :descripcion, :imagen, :tipo, :precio, :talle, :marca, :categoria, 1)";
+                (:codigo, :nombre, :descripcion, :imagen, :tipo, :precio, :talle, :marca, :categoria, 1)";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([
+            'codigo'      => $data['codigo'],
             'nombre'      => $data['nombre'],
             'descripcion' => $data['descripcion'],
             'imagen'      => $data['imagen'],
@@ -139,6 +159,7 @@ class Product {
     // ACTUALIZAR
     public function actualizar($data) {
         $sql = "UPDATE producto SET
+                    codigo                 = :codigo,
                     nombre                 = :nombre,
                     descripcion            = :descripcion,
                     imagen                 = :imagen,
@@ -152,6 +173,7 @@ class Product {
         $stmt = $this->conn->prepare($sql);
         return $stmt->execute([
             'id'          => $data['id'],
+            'codigo'      => $data['codigo'],
             'nombre'      => $data['nombre'],
             'descripcion' => $data['descripcion'],
             'imagen'      => $data['imagen'],

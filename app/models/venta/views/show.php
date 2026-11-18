@@ -84,7 +84,15 @@
                 <div class="meta"><small>N° de venta</small><b>#<?= $venta['id_venta'] ?></b></div>
                 <div class="meta"><small>Fecha</small><b><?= date('d/m/Y H:i', strtotime($venta['fecha'])) ?></b></div>
                 <div class="meta"><small>Cliente</small><b><?= htmlspecialchars($venta['nombre_cliente'] ?? 'Consumidor final') ?></b></div>
-                <div class="meta"><small>Método de pago</small><b><?= htmlspecialchars($venta['metodo_de_pago']) ?></b></div>
+                <div class="meta"><small>Método de pago</small>
+                    <?php if (count($pagos) > 1): ?>
+                        <?php foreach ($pagos as $p): ?>
+                            <b style="display:block"><?= htmlspecialchars($p['metodo_de_pago']) ?>: $<?= number_format($p['monto'], 2, ',', '.') ?></b>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <b><?= htmlspecialchars($venta['metodo_de_pago']) ?></b>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <div class="tabla-wrap">

@@ -5,6 +5,8 @@ $errores = [
     'error_al_guardar'   => 'Ocurrió un error al registrar la venta. Intentá de nuevo.',
     'cliente_requerido'  => 'Seleccioná un cliente registrado para realizar la venta.',
     'cliente_invalido'   => 'El cliente seleccionado no existe o está dado de baja.',
+    'metodo_invalido'    => 'El método de pago seleccionado no es válido.',
+    'pago_invalido'      => 'En un pago combinado, efectivo y transferencia deben ser mayores a 0 y sumar exactamente el total de la venta.',
 ];
 $error = $_GET['error'] ?? '';
 ?>
@@ -73,9 +75,29 @@ $error = $_GET['error'] ?? '';
                                 <option value="Tarjeta Débito">Tarjeta Débito</option>
                                 <option value="Tarjeta Crédito">Tarjeta Crédito</option>
                                 <option value="Transferencia">Transferencia</option>
+                                <option value="Mixto">Efectivo + Transferencia</option>
                             </select>
                             <i class="bi bi-chevron-down flecha"></i>
                         </div>
+                    </div>
+
+                    <!-- Pago combinado: solo se muestra si se elige "Efectivo + Transferencia" -->
+                    <div id="bloque_mixto" style="display:none;margin-top:18px">
+                        <div class="campo" style="margin-bottom:14px">
+                            <label for="monto_efectivo">Monto en efectivo</label>
+                            <div class="input-wrap">
+                                <i class="bi bi-cash-coin icono"></i>
+                                <input type="number" id="monto_efectivo" name="monto_efectivo" min="0" step="0.01" placeholder="0.00" disabled>
+                            </div>
+                        </div>
+                        <div class="campo">
+                            <label for="monto_transferencia">Monto por transferencia</label>
+                            <div class="input-wrap">
+                                <i class="bi bi-bank icono"></i>
+                                <input type="number" id="monto_transferencia" name="monto_transferencia" min="0" step="0.01" placeholder="0.00" disabled>
+                            </div>
+                        </div>
+                        <small id="msg_mixto" style="display:block;margin-top:8px;min-height:18px"></small>
                     </div>
 
                     <div class="total-box">
@@ -98,6 +120,16 @@ $error = $_GET['error'] ?? '';
                         <i class="bi bi-plus-lg"></i> Agregar producto
                     </button>
                 </div>
+
+                <!-- Búsqueda rápida por código (sirve también con lector de código de barras) -->
+                <div class="panel-body" style="padding-bottom:6px">
+                    <div class="input-wrap">
+                        <i class="bi bi-upc-scan icono"></i>
+                        <input type="text" id="codigo_rapido" placeholder="Escribí o escaneá el código del producto y presioná Enter" autocomplete="off">
+                    </div>
+                    <small id="msg_codigo" style="display:block;margin-top:8px;min-height:18px"></small>
+                </div>
+
                 <div class="tabla-wrap">
                     <table class="tabla" style="min-width:820px">
                         <thead>
@@ -161,7 +193,7 @@ $error = $_GET['error'] ?? '';
         <div class="modal-buscar">
             <div class="input-wrap">
                 <i class="bi bi-search icono"></i>
-                <input type="text" id="buscador_productos" placeholder="Buscar por nombre o talle (ej: nike 45)..." autocomplete="off">
+                <input type="text" id="buscador_productos" placeholder="Buscar por nombre, talle o código (ej: nike 45)..." autocomplete="off">
             </div>
             <small>Tocá un producto para agregarlo a la venta. Enter elige el primero de la lista.</small>
         </div>
@@ -349,6 +381,7 @@ function agregarFila(abrirSelectorAuto = false) {
     tbody.appendChild(tr);
 
     if (abrirSelectorAuto) abrirSelector(idx);
+    return idx;
 }
 
 // =====================================================
@@ -369,10 +402,15 @@ function renderLista(filtro) {
     const tbody    = document.getElementById('lista_productos');
 
     ultimaLista = productosData.filter(p => {
-        const texto = normalizar(p.nombre + ' ' + (p.talle ?? ''));
+        const texto = normalizar(p.nombre + ' ' + (p.talle ?? '') + ' ' + (p.codigo ?? ''));
         return terminos.every(t => texto.includes(t));
     });
 
+    // Si lo escrito coincide exacto con un código, ese producto va primero y solo
+    const exactos = ultimaLista.filter(p => p.codigo && normalizar(p.codigo) === normalizar(filtro).trim());
+    if (exactos.length) ultimaLista = exactos;
+
+    
     if (!ultimaLista.length) {
         tbody.innerHTML = `<tr><td colspan="5" class="vacio">No se encontraron productos</td></tr>`;
         return;
@@ -394,7 +432,7 @@ function renderLista(filtro) {
 
         return `<tr class="${sinStock ? 'deshab' : 'clic'}"
                     ${sinStock ? '' : `onclick="elegirProducto('${p.id_producto}')"`}>
-                    <td class="nombre-prod">${esc(p.nombre)}</td>
+                    <td class="nombre-prod">${esc(p.nombre)}${p.codigo ? `<br><small style="color:var(--muted);font-weight:400">Cód: ${esc(p.codigo)}</small>` : ''}</td>
                     <td class="centro"><span class="chip">${esc(talle)}</span></td>
                     <td class="centro">${badgeStock}</td>
                     <td class="der precio">$${parseFloat(p.precio).toFixed(2)}</td>
@@ -419,6 +457,66 @@ buscador.addEventListener('keydown', e => {
         if (primero) elegirProducto(primero.id_producto);
     }
 });
+// ---------- Búsqueda rápida por código (Enter o lector de código de barras) ----------
+const codigoRapido = document.getElementById('codigo_rapido');
+const msgCodigo    = document.getElementById('msg_codigo');
+
+function avisoCodigo(texto, tipo) {
+    msgCodigo.textContent = texto;
+    msgCodigo.style.color = tipo === 'ok' ? 'var(--ok)' : 'var(--bad)';
+}
+
+function agregarPorCodigo(valor) {
+    const codigo = normalizar(valor).trim();
+    if (!codigo) return;
+
+    const p = productosData.find(x => x.codigo && normalizar(x.codigo).trim() === codigo);
+    if (!p) {
+        avisoCodigo(`No existe ningún producto con el código "${valor.trim()}".`, 'error');
+        codigoRapido.select();
+        return;
+    }
+
+    const stock = parseInt(p.stock_actual ?? 0);
+    if (stock <= 0) {
+        avisoCodigo(`"${p.nombre}" no tiene stock disponible.`, 'error');
+        codigoRapido.select();
+        return;
+    }
+
+    const inputs   = [...document.querySelectorAll('input[name="producto_id[]"]')];
+    const yaEsta   = inputs.find(i => i.value == p.id_producto);
+
+    if (yaEsta) {
+        // El producto ya está en la venta: se suma 1 unidad (sin pasar el stock)
+        const idx  = yaEsta.id.replace('prod_', '');
+        const cant = document.getElementById(`cant_${idx}`);
+        if ((parseInt(cant.value) || 0) >= stock) {
+            avisoCodigo(`Ya agregaste todo el stock disponible de "${p.nombre}" (${stock}).`, 'error');
+            codigoRapido.select();
+            return;
+        }
+        cant.value = (parseInt(cant.value) || 0) + 1;
+        calcularFila(idx);
+    } else {
+        // Usa una fila vacía si existe; si no, crea una nueva
+        const vacia = inputs.find(i => !i.value);
+        const idx   = vacia ? vacia.id.replace('prod_', '') : String(agregarFila(false));
+        seleccionarProducto(idx, p);
+    }
+
+    avisoCodigo(`Agregado: ${p.nombre}`, 'ok');
+    codigoRapido.value = '';
+    codigoRapido.focus();
+}
+
+codigoRapido.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        e.preventDefault();               // evita que Enter envíe el formulario
+        agregarPorCodigo(codigoRapido.value);
+    }
+});
+codigoRapido.addEventListener('input', () => { msgCodigo.textContent = ''; });
 
 // ---------- Aplicar el producto elegido a la fila ----------
 function seleccionarProducto(idx, p) {
@@ -493,14 +591,73 @@ function calcularTotal() {
         total += parseFloat(el.textContent.replace('$','') || 0);
     });
     document.getElementById('label_total').textContent = '$' + total.toFixed(2);
+    actualizarMixto();
 }
 
-// ---------- Validación al confirmar ----------
+// =====================================================
+//  PAGO COMBINADO (efectivo + transferencia)
+// =====================================================
+function totalVenta() {
+    return parseFloat(document.getElementById('label_total').textContent.replace('$', '')) || 0;
+}
+
+function esMixto() {
+    return document.getElementById('metodo_de_pago').value === 'Mixto';
+}
+
+// Muestra u oculta los campos de monto según el método elegido
+document.getElementById('metodo_de_pago').addEventListener('change', () => {
+    const mixto = esMixto();
+    const ef = document.getElementById('monto_efectivo');
+    const tr = document.getElementById('monto_transferencia');
+    document.getElementById('bloque_mixto').style.display = mixto ? 'block' : 'none';
+    // Deshabilitados no se envían con el formulario
+    ef.disabled = tr.disabled = !mixto;
+    ef.required = tr.required = mixto;
+    if (!mixto) { ef.value = ''; tr.value = ''; }
+    actualizarMixto();
+});
+
+// Al escribir el efectivo, la transferencia se completa sola con lo que falta
+document.getElementById('monto_efectivo').addEventListener('input', () => {
+    const resto = Math.max(0, totalVenta() - (parseFloat(document.getElementById('monto_efectivo').value) || 0));
+    document.getElementById('monto_transferencia').value = resto > 0 ? resto.toFixed(2) : '';
+    actualizarMixto();
+});
+document.getElementById('monto_transferencia').addEventListener('input', actualizarMixto);
+
+// Mensaje en vivo: cuánto falta, cuánto sobra o si ya está cubierto
+function actualizarMixto() {
+    if (!esMixto()) return;
+    const ef  = parseFloat(document.getElementById('monto_efectivo').value) || 0;
+    const tr  = parseFloat(document.getElementById('monto_transferencia').value) || 0;
+    const dif = Math.round((totalVenta() - ef - tr) * 100) / 100;
+    const msg = document.getElementById('msg_mixto');
+    if (dif > 0)      { msg.textContent = 'Falta asignar $' + dif.toFixed(2);              msg.style.color = 'var(--warn)'; }
+    else if (dif < 0) { msg.textContent = 'Te pasaste por $' + Math.abs(dif).toFixed(2);   msg.style.color = 'var(--bad)'; }
+    else              { msg.textContent = 'El pago cubre el total ✓';                      msg.style.color = 'var(--ok)'; }
+}
+
 document.getElementById('form_venta').addEventListener('submit', e => {
     const ids = document.querySelectorAll('input[name="producto_id[]"]');
     if (!ids.length || [...ids].some(i => !i.value)) {
         e.preventDefault();
         alert('Seleccioná un producto en cada fila (o eliminá las filas vacías).');
+        return;
+    }
+
+    // Pago combinado: los dos montos > 0 y la suma tiene que ser igual al total
+    if (esMixto()) {
+        const ef  = parseFloat(document.getElementById('monto_efectivo').value) || 0;
+        const tr  = parseFloat(document.getElementById('monto_transferencia').value) || 0;
+        const dif = Math.round((totalVenta() - ef - tr) * 100) / 100;
+        if (ef <= 0 || tr <= 0) {
+            e.preventDefault();
+            alert('En un pago combinado, tanto el efectivo como la transferencia deben ser mayores a 0.');
+        } else if (dif !== 0) {
+            e.preventDefault();
+            alert('Efectivo + transferencia debe sumar exactamente el total de la venta.');
+        }
     }
 });
 

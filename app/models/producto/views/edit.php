@@ -5,6 +5,8 @@ $errores = [
     'producto_duplicado' => 'Ya existe otro producto con ese nombre, talle y marca.',
     'imagen_invalida'    => 'La imagen no es válida. Usá un archivo JPG, PNG o WEBP.',
     'imagen_grande'      => 'La imagen es demasiado pesada. El máximo es 2 MB.',
+    'codigo_duplicado'   => 'Ya existe otro producto con ese código.',
+    'codigo_largo'       => 'El código no puede superar los 50 caracteres.',
 ];
 $error = $_GET['error'] ?? '';
 ?>
@@ -68,6 +70,15 @@ $error = $_GET['error'] ?? '';
                         </div>
                     </div>
 
+                    <div class="campo col-6">
+                        <label for="codigo">Código del producto <small>(opcional · ej: código de barras o SKU)</small></label>
+                        <div class="input-wrap">
+                            <i class="bi bi-upc-scan icono"></i>
+                            <input type="text" id="codigo" name="codigo" maxlength="50" placeholder="Ej: 7791234567890" autocomplete="off"
+                                   value="<?= htmlspecialchars($producto['codigo'] ?? '') ?>">
+                        </div>
+                    </div>
+                    
                     <div class="campo col-6">
                         <label for="descripcion">Descripción</label>
                         <div class="input-wrap area">

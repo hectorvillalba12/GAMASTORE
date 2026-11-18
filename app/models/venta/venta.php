@@ -141,6 +141,26 @@ class venta {
         return $this->conn->lastInsertId();
     }
 
+    // Guarda un pago de la venta (una venta puede tener varios: ej. efectivo + transferencia)
+    public function registrarPago($id_venta, $metodo, $monto) {
+        $sql = "INSERT INTO venta_pago (venta_id, metodo_de_pago, monto)
+                VALUES (:venta, :metodo, :monto)";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([
+            'venta'  => $id_venta,
+            'metodo' => $metodo,
+            'monto'  => $monto
+        ]);
+    }
+
+    // Pagos de una venta (para mostrar el desglose en el comprobante)
+    public function obtenerPagos($id_venta) {
+        $sql = "SELECT metodo_de_pago, monto FROM venta_pago
+                WHERE venta_id = :id ORDER BY id_venta_pago";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute(['id' => $id_venta]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
     
     public function actualizarTotal($id_venta, $total) {
         $sql = "UPDATE venta SET total = :total WHERE id_venta = :id";
@@ -312,7 +332,7 @@ class venta {
     }
     // LISTAR productos con stock disponible
     public function listarProductos() {
-        $sql = "SELECT pr.id_producto, pr.nombre, pr.precio, i.stock_actual,
+        $sql = "SELECT pr.id_producto, pr.codigo, pr.nombre, pr.precio, i.stock_actual,
                     t.talles_disponibles AS talle
                 FROM producto pr
                 LEFT JOIN inventario i ON i.producto_id_producto = pr.id_producto AND i.activo = 1

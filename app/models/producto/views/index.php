@@ -100,10 +100,11 @@ $hayFiltros     = !empty($filtroMarca) || !empty($filtroTalle);
             <span class="cuenta"><?= (int) $totalProductos ?> en total</span>
         </div>
         <div class="tabla-wrap">
-            <table class="tabla" style="min-width:940px">
+            <table class="tabla" style="min-width:1020px">
                 <thead>
                     <tr>
                         <th>#</th>
+                        <th>Código</th>
                         <th>Nombre</th>
                         <th>Tipo</th>
                         <th>Marca</th>
@@ -117,7 +118,7 @@ $hayFiltros     = !empty($filtroMarca) || !empty($filtroTalle);
                 <tbody>
                 <?php if (empty($productos)): ?>
                     <tr>
-                        <td colspan="9" class="vacio">
+                        <td colspan="10" class="vacio">
                             <?= $hayFiltros ? 'No se encontraron productos con esos filtros.' : 'No hay productos activos.' ?>
                         </td>
                     </tr>
@@ -125,6 +126,7 @@ $hayFiltros     = !empty($filtroMarca) || !empty($filtroTalle);
                     <?php foreach ($productos as $p): ?>
                     <tr>
                         <td class="id"><?= $p['id_producto'] ?></td>
+                        <td><?= htmlspecialchars($p['codigo'] ?? '—') ?></td>
                         <td class="nombre-prod"><?= htmlspecialchars($p['nombre']) ?></td>
                         <td><?= htmlspecialchars($p['tipodezapatillas']) ?></td>
                         <td><?= htmlspecialchars($p['marca'] ?? '—') ?></td>

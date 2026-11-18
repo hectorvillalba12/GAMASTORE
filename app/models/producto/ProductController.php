@@ -109,7 +109,8 @@ class ProductController {
 
     public function store() {
         Auth::verificarModulo('productos');
-
+        $codigo      = trim($_POST['codigo'] ?? '');
+        $codigo      = ($codigo === '') ? null : $codigo;
         $nombre      = trim($_POST['nombre'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $tipo        = trim($_POST['tipodezapatillas'] ?? '');
@@ -117,6 +118,16 @@ class ProductController {
         $talle       = $_POST['talle_id_talle'] ?? '';
         $marca       = $_POST['marca_id_marca'] ?? '';
         $categoria   = $_POST['categoria_id_categoria'] ?? '';
+
+        // Validación del código (opcional): largo máximo y que no esté repetido
+        if ($codigo !== null && mb_strlen($codigo) > 50) {
+            header("Location: index.php?action=crear&error=codigo_largo");
+            exit();
+        }
+        if ($codigo !== null && $this->producto->existeCodigo($codigo)) {
+            header("Location: index.php?action=crear&error=codigo_duplicado");
+            exit();
+        }
 
         // Validación de campos requeridos
         if (empty($nombre) || empty($tipo) || empty($precio) || empty($talle) || empty($marca) || empty($categoria)) {
@@ -148,6 +159,7 @@ class ProductController {
         }
 
         $data = [
+            'codigo'           => $codigo, 
             'nombre'           => $nombre,
             'descripcion'      => $descripcion,
             'imagen'           => $img['nombre'],
@@ -195,6 +207,8 @@ class ProductController {
         Auth::verificarModulo('productos');
 
         $id          = $_POST['id_producto'];
+        $codigo      = trim($_POST['codigo'] ?? '');
+        $codigo      = ($codigo === '') ? null : $codigo; 
         $nombre      = trim($_POST['nombre'] ?? '');
         $descripcion = trim($_POST['descripcion'] ?? '');
         $tipo        = trim($_POST['tipodezapatillas'] ?? '');
@@ -213,6 +227,16 @@ class ProductController {
             exit();
         }
 
+        // Validación del código (opcional), excluyendo el propio producto
+        if ($codigo !== null && mb_strlen($codigo) > 50) {
+            header("Location: index.php?action=editar&id={$id}&error=codigo_largo");
+            exit();
+        }
+        if ($codigo !== null && $this->producto->existeCodigo($codigo, $id)) {
+            header("Location: index.php?action=editar&id={$id}&error=codigo_duplicado");
+            exit();
+        }
+        
         // Validación de duplicados, excluyendo el propio producto
         if ($this->producto->existeDuplicado($nombre, $talle, $marca, $id)) {
             header("Location: index.php?action=editar&id={$id}&error=producto_duplicado");
@@ -232,6 +256,7 @@ class ProductController {
 
         $data = [
             'id'          => $id,
+            'codigo'      => $codigo,
             'nombre'      => $nombre,
             'descripcion' => $descripcion,
             'imagen'      => $imagenFinal,

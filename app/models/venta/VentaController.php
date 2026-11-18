@@ -131,8 +131,30 @@ class VentaController {
         $usuario_id  = $this->usuarioActualId();
         $id_empleado = $this->venta->obtenerEmpleadoPorUsuario($usuario_id);
 
+        // Método de pago: uno solo, o "Mixto" = parte en efectivo + parte en transferencia
+        $metodo = $_POST['metodo_de_pago'] ?? '';
+        $metodosValidos = ['Efectivo', 'Tarjeta Débito', 'Tarjeta Crédito', 'Transferencia', 'Mixto'];
+        if (!in_array($metodo, $metodosValidos, true)) {
+            header("Location: index.php?action=ventas_crear&error=metodo_invalido");
+            exit();
+        }
+
+        $esMixto        = ($metodo === 'Mixto');
+        $monto_efectivo = 0;
+        $monto_transf   = 0;
+        if ($esMixto) {
+            $monto_efectivo = round((float)str_replace(',', '.', $_POST['monto_efectivo'] ?? 0), 2);
+            $monto_transf   = round((float)str_replace(',', '.', $_POST['monto_transferencia'] ?? 0), 2);
+            // Para que sea combinado, los dos montos tienen que ser mayores a 0
+            if ($monto_efectivo <= 0 || $monto_transf <= 0) {
+                header("Location: index.php?action=ventas_crear&error=pago_invalido");
+                exit();
+            }
+        }
+
         $data = [
-            'metodo_de_pago'       => $_POST['metodo_de_pago'],
+            // En la venta queda el texto del método; el detalle exacto va en venta_pago
+            'metodo_de_pago'       => $esMixto ? 'Efectivo + Transferencia' : $metodo,
             'cliente_idcliente'    => $cliente_id,
             'empleado_id_empleado' => $id_empleado
         ];
@@ -175,6 +197,21 @@ class VentaController {
                 }
             }
 
+            $total = round($total, 2);
+
+            // Los pagos se arman en el servidor y tienen que sumar exactamente el total
+            if ($esMixto) {
+                if (abs(($monto_efectivo + $monto_transf) - $total) > 0.009) {
+                    throw new Exception('pago_invalido');
+                }
+                $pagos = [['Efectivo', $monto_efectivo], ['Transferencia', $monto_transf]];
+            } else {
+                $pagos = [[$metodo, $total]];
+            }
+            foreach ($pagos as $pago) {
+                $this->venta->registrarPago($id_venta, $pago[0], $pago[1]);
+            }
+
             $this->venta->actualizarTotal($id_venta, $total);
             $this->db->commit();
 
@@ -182,6 +219,10 @@ class VentaController {
             $this->db->rollBack();
             if ($e->getMessage() === 'caja_cerrada') {
                 header("Location: index.php?action=caja&error=caja_requerida");
+                exit();
+            }
+            if ($e->getMessage() === 'pago_invalido') {
+                header("Location: index.php?action=ventas_crear&error=pago_invalido");
                 exit();
             }
             header("Location: index.php?action=ventas_crear&error=error_al_guardar");
@@ -197,6 +238,7 @@ class VentaController {
         $id      = $_GET['id'];
         $venta   = $this->venta->obtener($id);
         $detalle = $this->venta->obtenerDetalle($id);
+        $pagos   = $this->venta->obtenerPagos($id);
         require __DIR__ . '/views/show.php';
     }
     

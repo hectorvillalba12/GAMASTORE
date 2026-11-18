@@ -11,7 +11,7 @@ class Inventario {
         $where = " WHERE i.activo = 1";
 
         if ($buscar !== '') {
-            $where .= " AND p.nombre LIKE :buscar";
+            $where .= " AND (p.nombre LIKE :buscar OR p.codigo LIKE :buscar2)";
         }
         if (!empty($idTalle)) {
             $where .= " AND p.talle_id_talle = :talle";
@@ -30,6 +30,7 @@ class Inventario {
     private function bindFiltro($stmt, $buscar, $idTalle) {
         if ($buscar !== '') {
             $stmt->bindValue(':buscar', '%' . $buscar . '%');
+            $stmt->bindValue(':buscar2', '%' . $buscar . '%');
         }
         if (!empty($idTalle)) {
             $stmt->bindValue(':talle', (int)$idTalle, PDO::PARAM_INT);
@@ -39,6 +40,7 @@ class Inventario {
     // LISTAR inventario ACTIVO con filtros y paginación
     public function listar($limite = 10, $offset = 0, $buscar = '', $idTalle = null, $estado = '') {
         $sql = "SELECT i.*,
+                    p.codigo,
                     p.nombre AS nombre_producto,
                     p.precio,
                     p.tipodezapatillas,
@@ -90,6 +92,7 @@ class Inventario {
     // LISTAR filas de inventario INACTIVAS (baja lógica)
     public function listarInactivos() {
         $sql = "SELECT i.*,
+                    p.codigo,
                     p.nombre AS nombre_producto,
                     p.tipodezapatillas,
                     t.talles_disponibles AS talle,

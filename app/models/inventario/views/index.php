@@ -96,7 +96,7 @@ $totalInactivos = count($inventariosInactivos ?? []);
 
             <div class="input-wrap">
                 <i class="bi bi-search icono"></i>
-                <input type="text" name="buscar" placeholder="Buscar producto..."
+                <input type="text" name="buscar" placeholder="Buscar por nombre o código..."
                        value="<?= htmlspecialchars($filtroBuscar) ?>">
             </div>
 
@@ -136,10 +136,11 @@ $totalInactivos = count($inventariosInactivos ?? []);
             <span class="cuenta"><?= (int) $totalInventarios ?> registros</span>
         </div>
         <div class="tabla-wrap">
-            <table class="tabla" style="min-width:1100px">
+            <table class="tabla" style="min-width:1180px">
                 <thead>
                     <tr>
                         <th>#</th>
+                        <th>Código</th>
                         <th>Producto</th>
                         <th>Tipo</th>
                         <th>Talle</th>
@@ -155,7 +156,7 @@ $totalInactivos = count($inventariosInactivos ?? []);
                 <tbody>
                 <?php if (empty($inventarios)): ?>
                     <tr>
-                        <td colspan="11" class="vacio">
+                        <td colspan="12" class="vacio">
                             <?= $hayFiltros ? 'No se encontraron registros con esos filtros.' : 'No hay productos en el inventario.' ?>
                         </td>
                     </tr>
@@ -175,6 +176,7 @@ $totalInactivos = count($inventariosInactivos ?? []);
                     ?>
                     <tr>
                         <td class="id"><?= $i['id_inventario'] ?></td>
+                        <td><?= htmlspecialchars($i['codigo'] ?? '—') ?></td>
                         <td class="nombre-prod"><?= htmlspecialchars($i['nombre_producto'] ?? '—') ?></td>
                         <td><?= htmlspecialchars($i['tipodezapatillas'] ?? '—') ?></td>
                         <td><span class="chip"><?= htmlspecialchars($i['talle'] ?? '—') ?></span></td>
@@ -267,10 +269,11 @@ $totalInactivos = count($inventariosInactivos ?? []);
             <span class="cuenta"><?= $totalInactivos ?></span>
         </div>
         <div class="tabla-wrap">
-            <table class="tabla" style="min-width:860px">
+            <table class="tabla" style="min-width:940px">
                 <thead>
                     <tr>
                         <th>#</th>
+                        <th>Codigo</th>
                         <th>Producto</th>
                         <th>Tipo</th>
                         <th>Talle</th>
@@ -284,12 +287,13 @@ $totalInactivos = count($inventariosInactivos ?? []);
                     <?php foreach ($inventariosInactivos as $inv): ?>
                     <tr class="apagada">
                         <td class="id"><?= $inv['id_inventario'] ?></td>
+                        <td><?= htmlspecialchars($inv['codigo'] ?? '—') ?></td>
                         <td class="nombre-prod"><?= htmlspecialchars($inv['nombre_producto'] ?? '—') ?></td>
                         <td><?= htmlspecialchars($inv['tipodezapatillas'] ?? '—') ?></td>
                         <td><span class="chip"><?= htmlspecialchars($inv['talle'] ?? '—') ?></span></td>
                         <td>
                             <?php if (!empty($inv['imagen'])): ?>
-                                <img class="thumb-prod" src="uploads/productos/<?= htmlspecialchars($i['imagen']) ?>" alt="">
+                                <img class="thumb-prod" src="uploads/productos/<?= htmlspecialchars($inv['imagen']) ?>" alt="">
                             <?php else: ?>
                                 <span class="thumb-prod thumb-vacio"><i class="bi bi-image"></i></span>
                             <?php endif; ?>
